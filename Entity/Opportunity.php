@@ -6,6 +6,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Mautic\CoreBundle\Doctrine\Mapping\ClassMetadataBuilder;
 use Mautic\CoreBundle\Entity\CommonEntity;
+use Mautic\ApiBundle\Serializer\Driver\ApiMetadataDriver;
 use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\MauticEventsBundle\Entity\Event;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -115,6 +116,30 @@ class Opportunity extends CommonEntity
         $metadata->addPropertyConstraint('opportunityExternalId', new NotBlank(['message' => 'mautic.opportunities.opportunity_external_id.required']));
         $metadata->addPropertyConstraint('contact', new NotBlank(['message' => 'mautic.opportunities.contact.required']));
         $metadata->addPropertyConstraint('event', new NotBlank(['message' => 'mautic.opportunities.event.required']));
+    }
+
+    /**
+     * Prepares the metadata for API usage.
+     */
+    public static function loadApiMetadata(ApiMetadataDriver $metadata): void
+    {
+        $metadata->setGroupPrefix('opportunity')
+            ->addListProperties([
+                'id',
+                'opportunityExternalId',
+                'name',
+                'stage',
+                'amount',
+                'suitecrmId',
+            ])
+            ->addProperties([
+                'abstractReviewResultUrl',
+                'invoiceUrl',
+                'invitationUrl',
+                'createdAt',
+                'updatedAt',
+            ])
+            ->build();
     }
 
     public function __construct()
