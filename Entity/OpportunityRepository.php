@@ -49,7 +49,7 @@ class OpportunityRepository extends CommonRepository
     public function findByStage(string $stage): array
     {
         return $this->createQueryBuilder('o')
-            ->where('o.stage = :stage')
+            ->where('o.salesStage = :stage')
             ->setParameter('stage', $stage)
             ->orderBy('o.createdAt', 'DESC')
             ->getQuery()
@@ -77,17 +77,17 @@ class OpportunityRepository extends CommonRepository
 
         switch ($operator) {
             case 'eq':
-                $qb->andWhere('o.stage = :stage');
+                $qb->andWhere('o.salesStage = :stage');
                 break;
             case 'neq':
-                $qb->andWhere('o.stage != :stage');
+                $qb->andWhere('o.salesStage != :stage');
                 break;
             case 'like':
-                $qb->andWhere('o.stage LIKE :stage');
+                $qb->andWhere('o.salesStage LIKE :stage');
                 $stage = '%' . $stage . '%';
                 break;
             case 'not_like':
-                $qb->andWhere('o.stage NOT LIKE :stage');
+                $qb->andWhere('o.salesStage NOT LIKE :stage');
                 $stage = '%' . $stage . '%';
                 break;
         }
@@ -254,11 +254,11 @@ class OpportunityRepository extends CommonRepository
 
         switch ($operator) {
             case 'not_empty':
-                $qb->andWhere('o.abstractReviewResultUrl IS NOT NULL')
-                   ->andWhere('o.abstractReviewResultUrl != \'\'');
+                $qb->andWhere('o.abstractReviewResultUrlC IS NOT NULL')
+                   ->andWhere('o.abstractReviewResultUrlC != \'\'');
                 break;
             case 'like':
-                $qb->andWhere('o.abstractReviewResultUrl LIKE :url');
+                $qb->andWhere('o.abstractReviewResultUrlC LIKE :url');
                 $url = '%' . $url . '%';
                 $qb->setParameter('url', $url);
                 break;
@@ -279,11 +279,11 @@ class OpportunityRepository extends CommonRepository
 
         switch ($operator) {
             case 'not_empty':
-                $qb->andWhere('o.invoiceUrl IS NOT NULL')
-                   ->andWhere('o.invoiceUrl != \'\'');
+                $qb->andWhere('o.invoiceUrlC IS NOT NULL')
+                   ->andWhere('o.invoiceUrlC != \'\'');
                 break;
             case 'like':
-                $qb->andWhere('o.invoiceUrl LIKE :url');
+                $qb->andWhere('o.invoiceUrlC LIKE :url');
                 $url = '%' . $url . '%';
                 $qb->setParameter('url', $url);
                 break;

@@ -77,11 +77,11 @@ class TokenSubscriber implements EventSubscriberInterface
                     $opportunity = $opportunities[0];
                     
                     $tokenValues = [
-                        'opportunity.stage' => $opportunity->getStage() ?? '',
+                        'opportunity.stage' => $opportunity->getSalesStage() ?? '',
                         'opportunity.amount' => $opportunity->getAmount() ? number_format($opportunity->getAmount(), 2) : '',
                         'opportunity.external_id' => $opportunity->getOpportunityExternalId() ?? '',
-                        'opportunity.abstract_review_result_url' => $opportunity->getAbstractReviewResultUrl() ?? '',
-                        'opportunity.invoice_url' => $opportunity->getInvoiceUrl() ?? '',
+                        'opportunity.abstract_review_result_url' => $opportunity->getAbstractReviewResultUrlC() ?? '',
+                        'opportunity.invoice_url' => $opportunity->getInvoiceUrlC() ?? '',
                         'opportunity.invitation_url' => $opportunity->getInvitationUrl() ?? '',
                         'opportunity.suitecrm_id' => $opportunity->getSuitecrmId() ?? '',
                         'opportunity.created_at' => $opportunity->getCreatedAt() ? $opportunity->getCreatedAt()->format('Y-m-d H:i:s') : '',

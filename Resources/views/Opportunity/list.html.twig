@@ -69,8 +69,8 @@
                         }) }}
                         {{ include('@MauticCore/Helper/tableheader.html.twig', {
                             'sessionVar': 'opportunity',
-                            'orderBy': 'o.stage',
-                            'text': 'mautic.opportunities.stage',
+                            'orderBy': 'o.salesStage',
+                            'text': 'mautic.opportunities.sales_stage',
                             'class': 'visible-md visible-lg'
                         }) }}
                         {{ include('@MauticCore/Helper/tableheader.html.twig', {
@@ -148,16 +148,16 @@
                                     {{ item.getEvent().getName() }}
                                 {% endif %}
                             </td>
-                            <td class="visible-md visible-lg">{{ item.getStage() }}</td>
+                            <td class="visible-md visible-lg">{{ item.getSalesStage() }}</td>
                             <td class="visible-md visible-lg">{{ item.getAmount() }}</td>
                             <td class="visible-md visible-lg">
-                                {% if item.getAbstractReviewResultUrl() %}
-                                    <a href="{{ item.getAbstractReviewResultUrl() }}" target="_blank">{{ item.getAbstractReviewResultUrl() }}</a>
+                                {% if item.getAbstractReviewResultUrlC() %}
+                                    <a href="{{ item.getAbstractReviewResultUrlC() }}" target="_blank">{{ item.getAbstractReviewResultUrlC() }}</a>
                                 {% endif %}
                             </td>
                             <td class="visible-md visible-lg">
-                                {% if item.getInvoiceUrl() %}
-                                    <a href="{{ item.getInvoiceUrl() }}" target="_blank">{{ item.getInvoiceUrl() }}</a>
+                                {% if item.getInvoiceUrlC() %}
+                                    <a href="{{ item.getInvoiceUrlC() }}" target="_blank">{{ item.getInvoiceUrlC() }}</a>
                                 {% endif %}
                             </td>
                             <td class="visible-md visible-lg">
