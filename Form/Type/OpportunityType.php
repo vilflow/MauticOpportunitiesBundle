@@ -69,7 +69,7 @@ class OpportunityType extends AbstractType
             'label'      => 'mautic.opportunities.name',
             'label_attr' => ['class' => 'control-label'],
             'attr'       => ['class' => 'form-control'],
-            'required'   => false,
+            'required'   => true,
         ]);
 
         $builder->add('opportunityType', ChoiceType::class, [
