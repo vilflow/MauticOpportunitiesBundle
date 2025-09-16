@@ -170,7 +170,7 @@ class OpportunityApiController extends CommonApiController
         ];
 
         foreach ($map as $from => $to) {
-            if (array_key_exists($from, $parameters) && !array_key_exists($to, $parameters)) {
+            if (array_key_exists($from, $parameters)) {
                 $parameters[$to] = $parameters[$from];
                 unset($parameters[$from]);
             }
@@ -207,7 +207,7 @@ class OpportunityApiController extends CommonApiController
             }
             unset($parameters['eventIds']);
         }
-
+        
         return parent::prepareParametersForBinding($request, $parameters, $entity, $action);
     }
 }

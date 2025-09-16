@@ -19,7 +19,6 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
  * @extends AbstractType<Opportunity>
@@ -33,9 +32,7 @@ class OpportunityType extends AbstractType
             'label'      => 'mautic.opportunities.opportunity_external_id',
             'label_attr' => ['class' => 'control-label'],
             'attr'       => ['class' => 'form-control'],
-            'constraints' => [
-                new NotBlank(['message' => 'mautic.opportunities.opportunity_external_id.required']),
-            ],
+            'required'   => true,
         ]);
 
         $builder->add('contact', EntityType::class, [
@@ -47,9 +44,7 @@ class OpportunityType extends AbstractType
                 return $contact->getPrimaryIdentifier();
             },
             'placeholder' => 'mautic.opportunities.contact.select',
-            'constraints' => [
-                new NotBlank(['message' => 'mautic.opportunities.contact.required']),
-            ],
+            'required'    => true,
         ]);
 
         $builder->add('event', EntityType::class, [
@@ -59,9 +54,7 @@ class OpportunityType extends AbstractType
             'class'       => Event::class,
             'choice_label' => 'name',
             'placeholder' => 'mautic.opportunities.event.select',
-            'constraints' => [
-                new NotBlank(['message' => 'mautic.opportunities.event.required']),
-            ],
+            'required'    => true,
         ]);
 
         // Basic opportunity information
