@@ -83,7 +83,17 @@
                                 </div>
                             </div>
                             {% endif %}
-                            
+
+                            {% if opportunity.getAmountUsdollar() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.amount_usdollar{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-usd mr-1"></i>
+                                    ${{ opportunity.getAmountUsdollar()|number_format(2) }}
+                                </div>
+                            </div>
+                            {% endif %}
+
                             {% if opportunity.getSuitecrmId() %}
                                 <div class="detail-item mb-8 mt-8">
                                     <label class="detail-label">{% trans %}mautic.opportunities.suitecrm_id{% endtrans %}</label>
@@ -91,6 +101,15 @@
                                         <code>{{ opportunity.getSuitecrmId() }}</code>
                                     </div>
                                 </div>
+                            {% endif %}
+
+                            {% if opportunity.getProbability() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.probability{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-primary">{{ opportunity.getProbability() }}%</span>
+                                </div>
+                            </div>
                             {% endif %}
 
                             {% if opportunity.getCreatedAt() %}
@@ -107,6 +126,475 @@
                                         <span class="label label-info">{{ opportunity.getSalesStage() }}</span>
                                     </div>
                                 </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information Panel -->
+            <div class="panel panel-default mb-8">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-info-circle mr-2"></i>
+                        {% trans %}mautic.opportunities.additional_info{% endtrans %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if opportunity.getOpportunityType() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.opportunity_type{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-default">{{ opportunity.getOpportunityType() }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getLeadSource() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.lead_source{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-source mr-1"></i>
+                                    {{ opportunity.getLeadSource() }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getDateClosed() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.date_closed{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-calendar mr-1"></i>
+                                    {{ opportunity.getDateClosed()|date('Y-m-d') }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getNextStep() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.next_step{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-arrow-right mr-1"></i>
+                                    {{ opportunity.getNextStep() }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            {% if opportunity.getDescription() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.core.description{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <p class="text-muted">{{ opportunity.getDescription()|nl2br }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getDateEntered() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.date_entered{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-calendar-plus mr-1"></i>
+                                    {{ opportunity.getDateEntered()|date('Y-m-d H:i:s') }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getDateModified() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.date_modified{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-edit mr-1"></i>
+                                    {{ opportunity.getDateModified()|date('Y-m-d H:i:s') }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getUpdatedAt() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.updated_at{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-clock mr-1"></i>
+                                    {{ opportunity.getUpdatedAt()|date('Y-m-d H:i:s') }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Information Panel -->
+            <div class="panel panel-default mb-8">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-graduation-cap mr-2"></i>
+                        {% trans %}mautic.opportunities.academic_info{% endtrans %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if opportunity.getInstitutionC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.institution{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-university mr-1"></i>
+                                    {{ opportunity.getInstitutionC() }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getPaperTitleC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.paper_title{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-file-text mr-1"></i>
+                                    {{ opportunity.getPaperTitleC() }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getAbstractC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.abstract{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <div class="well well-sm">{{ opportunity.getAbstractC()|nl2br }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getCoAuthorsNamesC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.co_authors{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-users mr-1"></i>
+                                    {{ opportunity.getCoAuthorsNamesC() }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getKeywordsC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.keywords{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-tags mr-1"></i>
+                                    {{ opportunity.getKeywordsC() }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            {% if opportunity.getPresentationTypeC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.presentation_type{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-success">{{ opportunity.getPresentationTypeC() }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getRegistrationTypeC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.registration_type{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-warning">{{ opportunity.getRegistrationTypeC() }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getReviewResultC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.review_result{% endtrans %}</label>
+                                <div class="detail-value">
+                                    {% set reviewClass = opportunity.getReviewResultC() == 'Accepted' ? 'label-success' : (opportunity.getReviewResultC() == 'Declined' ? 'label-danger' : 'label-info') %}
+                                    <span class="label {{ reviewClass }}">{{ opportunity.getReviewResultC() }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getExtraPaperC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.extra_paper{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-plus-circle mr-1"></i>
+                                    {{ opportunity.getExtraPaperC() }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.isAbstractBookDpublicationC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.abstract_book_publication{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-success">
+                                        <i class="fa fa-check mr-1"></i>
+                                        {% trans %}mautic.core.form.yes{% endtrans %}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.isWithdrawC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.withdraw{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-danger">
+                                        <i class="fa fa-times mr-1"></i>
+                                        {% trans %}mautic.core.form.yes{% endtrans %}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information Panel -->
+            <div class="panel panel-default mb-8">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-credit-card mr-2"></i>
+                        {% trans %}mautic.opportunities.payment_info{% endtrans %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if opportunity.getPaymentStatusC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.payment_status{% endtrans %}</label>
+                                <div class="detail-value">
+                                    {% set paymentClass = opportunity.getPaymentStatusC() == 'Paid' ? 'label-success' : 'label-warning' %}
+                                    <span class="label {{ paymentClass }}">{{ opportunity.getPaymentStatusC() }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getPaymentChannelC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.payment_channel{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-credit-card mr-1"></i>
+                                    {{ opportunity.getPaymentChannelC() }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getTransactionIdC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.transaction_id{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <code>{{ opportunity.getTransactionIdC() }}</code>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getCouponCodeC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.coupon_code{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-info">{{ opportunity.getCouponCodeC() }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            {% if opportunity.getSalesReceiptUrlC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.sales_receipt_url{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <a href="{{ opportunity.getSalesReceiptUrlC() }}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fa fa-external-link mr-1"></i>
+                                        {% trans %}mautic.opportunities.view_receipt{% endtrans %}
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getWireTransferAttachmentC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.wire_transfer_attachment{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <a href="{{ opportunity.getWireTransferAttachmentC() }}" target="_blank" class="btn btn-sm btn-secondary">
+                                        <i class="fa fa-paperclip mr-1"></i>
+                                        {% trans %}mautic.opportunities.view_attachment{% endtrans %}
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Dates Panel -->
+            <div class="panel panel-default mb-8">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-calendar mr-2"></i>
+                        {% trans %}mautic.opportunities.important_dates{% endtrans %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if opportunity.getAbstractBookSendDateC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.abstract_book_send_date{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-calendar-o mr-1"></i>
+                                    {{ opportunity.getAbstractBookSendDateC()|date('Y-m-d') }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getAbstractResultSendDateC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.abstract_result_send_date{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-calendar-o mr-1"></i>
+                                    {{ opportunity.getAbstractResultSendDateC()|date('Y-m-d') }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            {% if opportunity.getAbstractResultReadyDateC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.abstract_result_ready_date{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-calendar-check mr-1"></i>
+                                    {{ opportunity.getAbstractResultReadyDateC()|date('Y-m-d') }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents & Links Panel -->
+            <div class="panel panel-default mb-8">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-file-text-o mr-2"></i>
+                        {% trans %}mautic.opportunities.documents_links{% endtrans %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if opportunity.getAbstractAttachmentC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.abstract_attachment{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <a href="{{ opportunity.getAbstractAttachmentC() }}" target="_blank" class="btn btn-sm btn-primary">
+                                        <i class="fa fa-download mr-1"></i>
+                                        {% trans %}mautic.opportunities.download_abstract{% endtrans %}
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getAcceptanceLetterUrlC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.acceptance_letter_url{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <a href="{{ opportunity.getAcceptanceLetterUrlC() }}" target="_blank" class="btn btn-sm btn-success">
+                                        <i class="fa fa-external-link mr-1"></i>
+                                        {% trans %}mautic.opportunities.view_acceptance_letter{% endtrans %}
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getInvitationLetterUrlC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.invitation_letter_url{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <a href="{{ opportunity.getInvitationLetterUrlC() }}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fa fa-external-link mr-1"></i>
+                                        {% trans %}mautic.opportunities.view_invitation_letter{% endtrans %}
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            {% if opportunity.getAbstractBookInformationC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.abstract_book_information{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <div class="well well-sm">{{ opportunity.getAbstractBookInformationC()|nl2br }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location & Contact Panel -->
+            <div class="panel panel-default mb-8">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-map-marker mr-2"></i>
+                        {% trans %}mautic.opportunities.location_contact{% endtrans %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if opportunity.getJjwgMapsAddressC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.address{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-map-marker mr-1"></i>
+                                    {{ opportunity.getJjwgMapsAddressC() }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getJjwgMapsLatC() and opportunity.getJjwgMapsLngC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.coordinates{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <i class="fa fa-globe mr-1"></i>
+                                    {{ opportunity.getJjwgMapsLatC() }}, {{ opportunity.getJjwgMapsLngC() }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if opportunity.getJjwgMapsGeocodeStatusC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.geocode_status{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-default">{{ opportunity.getJjwgMapsGeocodeStatusC() }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            {% if opportunity.isSmsPermissionC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.sms_permission{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-success">
+                                        <i class="fa fa-check mr-1"></i>
+                                        {% trans %}mautic.core.form.yes{% endtrans %}
+                                    </span>
+                                </div>
+                            </div>
                             {% endif %}
                         </div>
                     </div>
