@@ -1,0 +1,52 @@
+{% block opportunity_field_value_condition_widget %}
+    <div class="row">
+        <div class="col-xs-6">
+            {{ form_widget(form.field) }}
+        </div>
+        <div class="col-xs-3">
+            {{ form_widget(form.operator) }}
+        </div>
+        <div class="col-xs-3">
+            {{ form_widget(form.value) }}
+        </div>
+    </div>
+    <script>
+        if (typeof Mautic.updateOpportunityFieldValues === 'undefined') {
+            Mautic.updateOpportunityFieldValues = function(el) {
+                var wrapper = mQuery(el).closest('form');
+                var fieldSelect = wrapper.find('select[name*="[field]"]');
+                var operatorSelect = wrapper.find('select[name*="[operator]"]');
+                var valueField = wrapper.find('input[name*="[value]"], select[name*="[value]"]');
+
+                if (fieldSelect.length && operatorSelect.length) {
+                    var field = fieldSelect.val();
+                    var operator = operatorSelect.val();
+
+                    // Update form field based on field and operator selection
+                    mQuery.ajax({
+                        url: mauticAjaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'campaign:updateOpportunityFieldValueOptions',
+                            field: field,
+                            operator: operator
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.html) {
+                                var newValueField = mQuery(response.html).find('input[name*="[value]"], select[name*="[value]"]');
+                                if (newValueField.length) {
+                                    valueField.replaceWith(newValueField);
+                                }
+                            }
+                        }
+                    });
+                }
+            };
+
+            Mautic.updateOpportunityFieldValueOptions = function(el) {
+                // This function can be used for additional field value options updates
+            };
+        }
+    </script>
+{% endblock %}

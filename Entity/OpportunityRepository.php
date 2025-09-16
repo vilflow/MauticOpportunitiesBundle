@@ -65,252 +65,103 @@ class OpportunityRepository extends CommonRepository
         return $this->findOneBy(['suitecrmId' => $suitecrmId]);
     }
 
+
     /**
-     * Check if contact has opportunities matching stage criteria
+     * Check if contact has opportunities matching field value criteria
      */
-    public function contactHasOpportunityByStage(int $contactId, string $operator, string $stage): bool
+    public function contactHasOpportunityByFieldValue(int $contactId, string $field, string $operator, $value): bool
     {
         $qb = $this->createQueryBuilder('o')
             ->select('COUNT(o.id)')
             ->where('o.contact = :contactId')
             ->setParameter('contactId', $contactId);
 
+        $fieldAlias = 'o.' . $field;
+
         switch ($operator) {
             case 'eq':
-                $qb->andWhere('o.salesStage = :stage');
+                $qb->andWhere($fieldAlias . ' = :value');
+                $qb->setParameter('value', $value);
                 break;
             case 'neq':
-                $qb->andWhere('o.salesStage != :stage');
+                $qb->andWhere($fieldAlias . ' != :value');
+                $qb->setParameter('value', $value);
                 break;
             case 'like':
-                $qb->andWhere('o.salesStage LIKE :stage');
-                $stage = '%' . $stage . '%';
+                $qb->andWhere($fieldAlias . ' LIKE :value');
+                $qb->setParameter('value', '%' . $value . '%');
                 break;
-            case 'not_like':
-                $qb->andWhere('o.salesStage NOT LIKE :stage');
-                $stage = '%' . $stage . '%';
+            case '!like':
+                $qb->andWhere($fieldAlias . ' NOT LIKE :value');
+                $qb->setParameter('value', '%' . $value . '%');
                 break;
-        }
-        
-        $qb->setParameter('stage', $stage);
-
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
-    }
-
-    /**
-     * Check if contact has opportunities matching amount criteria
-     */
-    public function contactHasOpportunityByAmount(int $contactId, string $operator, float $amount): bool
-    {
-        $qb = $this->createQueryBuilder('o')
-            ->select('COUNT(o.id)')
-            ->where('o.contact = :contactId')
-            ->andWhere('o.amount IS NOT NULL')
-            ->setParameter('contactId', $contactId);
-
-        switch ($operator) {
-            case 'eq':
-                $qb->andWhere('o.amount = :amount');
+            case 'startsWith':
+                $qb->andWhere($fieldAlias . ' LIKE :value');
+                $qb->setParameter('value', $value . '%');
                 break;
-            case 'neq':
-                $qb->andWhere('o.amount != :amount');
+            case 'endsWith':
+                $qb->andWhere($fieldAlias . ' LIKE :value');
+                $qb->setParameter('value', '%' . $value);
                 break;
             case 'gt':
-                $qb->andWhere('o.amount > :amount');
+                $qb->andWhere($fieldAlias . ' > :value');
+                $qb->setParameter('value', $value);
                 break;
             case 'gte':
-                $qb->andWhere('o.amount >= :amount');
+                $qb->andWhere($fieldAlias . ' >= :value');
+                $qb->setParameter('value', $value);
                 break;
             case 'lt':
-                $qb->andWhere('o.amount < :amount');
+                $qb->andWhere($fieldAlias . ' < :value');
+                $qb->setParameter('value', $value);
                 break;
             case 'lte':
-                $qb->andWhere('o.amount <= :amount');
+                $qb->andWhere($fieldAlias . ' <= :value');
+                $qb->setParameter('value', $value);
                 break;
-        }
-        
-        $qb->setParameter('amount', $amount);
-
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
-    }
-
-    /**
-     * Check if contact has opportunities matching external ID criteria
-     */
-    public function contactHasOpportunityByExternalId(int $contactId, string $operator, string $externalId): bool
-    {
-        $qb = $this->createQueryBuilder('o')
-            ->select('COUNT(o.id)')
-            ->where('o.contact = :contactId')
-            ->setParameter('contactId', $contactId);
-
-        switch ($operator) {
-            case 'eq':
-                $qb->andWhere('o.opportunityExternalId = :externalId');
+            case 'empty':
+                $qb->andWhere('(' . $fieldAlias . ' IS NULL OR ' . $fieldAlias . ' = \'\')');
                 break;
-            case 'neq':
-                $qb->andWhere('o.opportunityExternalId != :externalId');
+            case '!empty':
+                $qb->andWhere($fieldAlias . ' IS NOT NULL')
+                   ->andWhere($fieldAlias . ' != \'\'');
                 break;
-            case 'like':
-                $qb->andWhere('o.opportunityExternalId LIKE :externalId');
-                $externalId = '%' . $externalId . '%';
+            case 'in':
+                if (is_array($value)) {
+                    $qb->andWhere($fieldAlias . ' IN (:value)');
+                    $qb->setParameter('value', $value);
+                } else {
+                    // Handle comma-separated values
+                    $values = explode(',', $value);
+                    $values = array_map('trim', $values);
+                    $qb->andWhere($fieldAlias . ' IN (:value)');
+                    $qb->setParameter('value', $values);
+                }
                 break;
-        }
-        
-        $qb->setParameter('externalId', $externalId);
-
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
-    }
-
-    /**
-     * Check if contact has opportunities matching SuiteCRM ID criteria
-     */
-    public function contactHasOpportunityBySuitecrmId(int $contactId, string $operator, string $suitecrmId): bool
-    {
-        $qb = $this->createQueryBuilder('o')
-            ->select('COUNT(o.id)')
-            ->where('o.contact = :contactId')
-            ->setParameter('contactId', $contactId);
-
-        switch ($operator) {
-            case 'eq':
-                $qb->andWhere('o.suitecrmId = :suitecrmId');
+            case '!in':
+                if (is_array($value)) {
+                    $qb->andWhere($fieldAlias . ' NOT IN (:value)');
+                    $qb->setParameter('value', $value);
+                } else {
+                    // Handle comma-separated values
+                    $values = explode(',', $value);
+                    $values = array_map('trim', $values);
+                    $qb->andWhere($fieldAlias . ' NOT IN (:value)');
+                    $qb->setParameter('value', $values);
+                }
                 break;
-            case 'neq':
-                $qb->andWhere('o.suitecrmId != :suitecrmId');
+            case 'regexp':
+                $qb->andWhere($fieldAlias . ' REGEXP :value');
+                $qb->setParameter('value', $value);
                 break;
-            case 'like':
-                $qb->andWhere('o.suitecrmId LIKE :suitecrmId');
-                $suitecrmId = '%' . $suitecrmId . '%';
+            case '!regexp':
+                $qb->andWhere($fieldAlias . ' NOT REGEXP :value');
+                $qb->setParameter('value', $value);
                 break;
-        }
-        
-        $qb->setParameter('suitecrmId', $suitecrmId);
-
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
-    }
-
-    /**
-     * Check if contact has opportunities matching name criteria
-     */
-    public function contactHasOpportunityByName(int $contactId, string $operator, string $name): bool
-    {
-        $qb = $this->createQueryBuilder('o')
-            ->select('COUNT(o.id)')
-            ->where('o.contact = :contactId')
-            ->setParameter('contactId', $contactId);
-
-        switch ($operator) {
-            case 'eq':
-                $qb->andWhere('o.name = :name');
-                break;
-            case 'neq':
-                $qb->andWhere('o.name != :name');
-                break;
-            case 'like':
-                $qb->andWhere('o.name LIKE :name');
-                $name = '%' . $name . '%';
-                break;
-        }
-        
-        $qb->setParameter('name', $name);
-
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
-    }
-
-    /**
-     * Check if contact has opportunities matching event criteria
-     */
-    public function contactHasOpportunityByEvent(int $contactId, string $operator, int $eventId): bool
-    {
-        $qb = $this->createQueryBuilder('o')
-            ->select('COUNT(o.id)')
-            ->where('o.contact = :contactId')
-            ->setParameter('contactId', $contactId);
-
-        switch ($operator) {
-            case 'eq':
-                $qb->andWhere('o.event = :eventId');
-                break;
-            case 'neq':
-                $qb->andWhere('o.event != :eventId');
-                break;
-        }
-        
-        $qb->setParameter('eventId', $eventId);
-
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
-    }
-
-    /**
-     * Check if contact has opportunities matching abstract review result URL criteria
-     */
-    public function contactHasOpportunityByAbstractReviewResultUrl(int $contactId, string $operator, string $url): bool
-    {
-        $qb = $this->createQueryBuilder('o')
-            ->select('COUNT(o.id)')
-            ->where('o.contact = :contactId')
-            ->setParameter('contactId', $contactId);
-
-        switch ($operator) {
-            case 'not_empty':
-                $qb->andWhere('o.abstractReviewResultUrlC IS NOT NULL')
-                   ->andWhere('o.abstractReviewResultUrlC != \'\'');
-                break;
-            case 'like':
-                $qb->andWhere('o.abstractReviewResultUrlC LIKE :url');
-                $url = '%' . $url . '%';
-                $qb->setParameter('url', $url);
-                break;
-        }
-
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
-    }
-
-    /**
-     * Check if contact has opportunities matching invoice URL criteria
-     */
-    public function contactHasOpportunityByInvoiceUrl(int $contactId, string $operator, string $url): bool
-    {
-        $qb = $this->createQueryBuilder('o')
-            ->select('COUNT(o.id)')
-            ->where('o.contact = :contactId')
-            ->setParameter('contactId', $contactId);
-
-        switch ($operator) {
-            case 'not_empty':
-                $qb->andWhere('o.invoiceUrlC IS NOT NULL')
-                   ->andWhere('o.invoiceUrlC != \'\'');
-                break;
-            case 'like':
-                $qb->andWhere('o.invoiceUrlC LIKE :url');
-                $url = '%' . $url . '%';
-                $qb->setParameter('url', $url);
-                break;
-        }
-
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
-    }
-
-    /**
-     * Check if contact has opportunities matching invitation URL criteria
-     */
-    public function contactHasOpportunityByInvitationUrl(int $contactId, string $operator, string $url): bool
-    {
-        $qb = $this->createQueryBuilder('o')
-            ->select('COUNT(o.id)')
-            ->where('o.contact = :contactId')
-            ->setParameter('contactId', $contactId);
-
-        switch ($operator) {
-            case 'not_empty':
-                $qb->andWhere('o.invitationUrl IS NOT NULL')
-                   ->andWhere('o.invitationUrl != \'\'');
-                break;
-            case 'like':
-                $qb->andWhere('o.invitationUrl LIKE :url');
-                $url = '%' . $url . '%';
-                $qb->setParameter('url', $url);
+            default:
+                // Default to equals
+                $qb->andWhere($fieldAlias . ' = :value');
+                $qb->setParameter('value', $value);
                 break;
         }
 
