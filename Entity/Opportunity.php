@@ -1054,14 +1054,10 @@ class Opportunity extends CommonEntity
     public static function getStageChoices(): array
     {
         return [
-            'Prospecting' => 'Prospecting',
-            'Qualification' => 'Qualification',
-            'Needs Analysis' => 'Needs Analysis',
-            'Value Proposition' => 'Value Proposition',
-            'Id. Decision Makers' => 'Id. Decision Makers',
-            'Perception Analysis' => 'Perception Analysis',
-            'Proposal/Price Quote' => 'Proposal/Price Quote',
-            'Negotiation/Review' => 'Negotiation/Review',
+            'Abstract_Submitted' => 'Abstract_Submitted',
+            'Abstract_Need_Revisions' => 'Abstract_Need_Revisions',
+            'Abstract_Rejected' => 'Abstract_Rejected',
+            'Abstract_Accepted' => 'Abstract_Accepted',
             'Closed Won' => 'Closed Won',
             'Closed Lost' => 'Closed Lost',
         ];
@@ -1107,11 +1103,9 @@ class Opportunity extends CommonEntity
     public static function getPresentationTypeChoices(): array
     {
         return [
-            'Oral Presentation' => 'Oral Presentation',
-            'Poster Presentation' => 'Poster Presentation',
-            'Keynote Speech' => 'Keynote Speech',
-            'Workshop' => 'Workshop',
-            'Panel Discussion' => 'Panel Discussion',
+            'Virtual_Presentation' => 'Virtual_Presentation',
+            'Oral_Poster_Presentation_Student' => 'Oral_Poster_Presentation_Student',
+            'Oral_Poster_Presentation_Regular' => 'Oral_Poster_Presentation_Regular',
         ];
     }
 
@@ -1121,12 +1115,9 @@ class Opportunity extends CommonEntity
     public static function getRegistrationTypeChoices(): array
     {
         return [
-            'Early Bird' => 'Early Bird',
-            'Regular' => 'Regular',
-            'Student' => 'Student',
-            'Faculty' => 'Faculty',
-            'Industry' => 'Industry',
-            'International' => 'International',
+            'Oral_Poster' => 'Oral_Poster',
+            'Listener' => 'Listener',
+            'Virtual' => 'Virtual',
         ];
     }
 
@@ -1136,11 +1127,8 @@ class Opportunity extends CommonEntity
     public static function getPaymentStatusChoices(): array
     {
         return [
-            'Pending' => 'Pending',
             'Paid' => 'Paid',
-            'Failed' => 'Failed',
-            'Refunded' => 'Refunded',
-            'Cancelled' => 'Cancelled',
+            'UnPaid' => 'UnPaid',
         ];
     }
 
@@ -1150,11 +1138,9 @@ class Opportunity extends CommonEntity
     public static function getPaymentChannelChoices(): array
     {
         return [
-            'Credit Card' => 'Credit Card',
-            'Bank Transfer' => 'Bank Transfer',
-            'PayPal' => 'PayPal',
-            'Wire Transfer' => 'Wire Transfer',
-            'Check' => 'Check',
+            'Credit' => 'Credit',
+            'Wire_Trasnfer' => 'Wire_Trasnfer',
+            'Easy_Payment' => 'Easy_Payment',
             'Cash' => 'Cash',
         ];
     }
@@ -1166,9 +1152,9 @@ class Opportunity extends CommonEntity
     {
         return [
             'Accepted' => 'Accepted',
-            'Rejected' => 'Rejected',
-            'Revision Required' => 'Revision Required',
-            'Under Review' => 'Under Review',
+            'Declined' => 'Declined',
+            'Accepted_with_Minor_Revisions' => 'Accepted_with_Minor_Revisions',
+            'Accepted_with_Major_Revisions' => 'Accepted_with_Major_Revisions',
         ];
     }
 
