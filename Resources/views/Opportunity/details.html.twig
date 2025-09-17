@@ -181,6 +181,15 @@
                                 </div>
                             </div>
                             {% endif %}
+
+                            {% if opportunity.getFormTypeC() %}
+                            <div class="detail-item mb-8 mt-8">
+                                <label class="detail-label">{% trans %}mautic.opportunities.form_type_c{% endtrans %}</label>
+                                <div class="detail-value">
+                                    <span class="label label-info">{{ opportunity.getFormTypeC() }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="col-md-6">

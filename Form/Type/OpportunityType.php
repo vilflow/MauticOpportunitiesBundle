@@ -133,6 +133,15 @@ class OpportunityType extends AbstractType
             'required'   => false,
         ]);
 
+        $builder->add('formTypeC', ChoiceType::class, [
+            'label'      => 'mautic.opportunities.form_type_c',
+            'label_attr' => ['class' => 'control-label'],
+            'attr'       => ['class' => 'form-control'],
+            'choices'    => Opportunity::getFormTypeChoices(),
+            'placeholder' => 'mautic.opportunities.choose_one',
+            'required'   => false,
+        ]);
+
         // Academic/Conference specific fields
         $builder->add('institutionC', TextType::class, [
             'label'      => 'mautic.opportunities.institution_c',

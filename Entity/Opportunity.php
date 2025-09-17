@@ -245,6 +245,11 @@ class Opportunity extends CommonEntity
     /**
      * @var string|null
      */
+    private $formTypeC;
+
+    /**
+     * @var string|null
+     */
     private $opportunityExternalId;
 
     /**
@@ -339,6 +344,7 @@ class Opportunity extends CommonEntity
         $builder->addField('paymentChannelC', Types::STRING, ['columnName' => 'payment_channel_c', 'nullable' => true]);
         $builder->addField('wireTransferAttachmentC', Types::TEXT, ['columnName' => 'wire_transfer_attachment_c', 'nullable' => true]);
         $builder->addField('jjwgMapsAddressC', Types::STRING, ['columnName' => 'jjwg_maps_address_c', 'nullable' => true]);
+        $builder->addField('formTypeC', Types::STRING, ['columnName' => 'form_type_c', 'nullable' => true]);
         $builder->addField('suitecrmId', Types::STRING, ['columnName' => 'suitecrm_id', 'nullable' => true]);
         $builder->addField('description', Types::TEXT, ['nullable' => true]);
 
@@ -960,6 +966,18 @@ class Opportunity extends CommonEntity
         return $this;
     }
 
+    public function getFormTypeC(): ?string
+    {
+        return $this->formTypeC;
+    }
+
+    public function setFormTypeC(?string $formTypeC): self
+    {
+        $this->formTypeC = $formTypeC;
+        $this->dateModified = new \DateTime();
+        return $this;
+    }
+
     public function getOpportunityExternalId(): ?string
     {
         return $this->opportunityExternalId;
@@ -1155,6 +1173,18 @@ class Opportunity extends CommonEntity
             'Declined' => 'Declined',
             'Accepted_with_Minor_Revisions' => 'Accepted_with_Minor_Revisions',
             'Accepted_with_Major_Revisions' => 'Accepted_with_Major_Revisions',
+        ];
+    }
+
+    /**
+     * Get available form types
+     */
+    public static function getFormTypeChoices(): array
+    {
+        return [
+            'Newsletter' => 'Newsletter',
+            'Visa' => 'Visa',
+            'Popup' => 'Popup',
         ];
     }
 

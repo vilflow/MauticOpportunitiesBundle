@@ -75,6 +75,12 @@
                         }) }}
                         {{ include('@MauticCore/Helper/tableheader.html.twig', {
                             'sessionVar': 'opportunity',
+                            'orderBy': 'o.formTypeC',
+                            'text': 'mautic.opportunities.form_type_c',
+                            'class': 'visible-md visible-lg'
+                        }) }}
+                        {{ include('@MauticCore/Helper/tableheader.html.twig', {
+                            'sessionVar': 'opportunity',
                             'orderBy': 'o.amount',
                             'text': 'mautic.opportunities.amount',
                             'class': 'visible-md visible-lg'
@@ -149,6 +155,11 @@
                                 {% endif %}
                             </td>
                             <td class="visible-md visible-lg">{{ item.getSalesStage() }}</td>
+                            <td class="visible-md visible-lg">
+                                {% if item.getFormTypeC() %}
+                                    <span class="label label-info">{{ item.getFormTypeC() }}</span>
+                                {% endif %}
+                            </td>
                             <td class="visible-md visible-lg">{{ item.getAmount() }}</td>
                             <td class="visible-md visible-lg">
                                 {% if item.getAbstractReviewResultUrlC() %}
