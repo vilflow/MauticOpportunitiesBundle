@@ -3,6 +3,17 @@
 {% extends isIndex ? '@MauticCore/Default/content.html.twig' : '@MauticCore/Default/raw_output.html.twig' %}
 {% block mauticContent %}opportunity{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        #opportunityTable .opportunity-url-cell {
+            max-width: 260px;
+            word-break: break-word;
+            white-space: normal;
+        }
+    </style>
+{% endblock %}
+
 {% block headerTitle %}{{ 'mautic.opportunities.header.index'|trans }}{% endblock %}
 
 {% block content %}
@@ -161,17 +172,17 @@
                                 {% endif %}
                             </td>
                             <td class="visible-md visible-lg">{{ item.getAmount() }}</td>
-                            <td class="visible-md visible-lg">
+                            <td class="visible-md visible-lg opportunity-url-cell">
                                 {% if item.getAbstractReviewResultUrlC() %}
                                     <a href="{{ item.getAbstractReviewResultUrlC() }}" target="_blank">{{ item.getAbstractReviewResultUrlC() }}</a>
                                 {% endif %}
                             </td>
-                            <td class="visible-md visible-lg">
+                            <td class="visible-md visible-lg opportunity-url-cell">
                                 {% if item.getInvoiceUrlC() %}
                                     <a href="{{ item.getInvoiceUrlC() }}" target="_blank">{{ item.getInvoiceUrlC() }}</a>
                                 {% endif %}
                             </td>
-                            <td class="visible-md visible-lg">
+                            <td class="visible-md visible-lg opportunity-url-cell">
                                 {% if item.getInvitationUrl() %}
                                     <a href="{{ item.getInvitationUrl() }}" target="_blank">{{ item.getInvitationUrl() }}</a>
                                 {% endif %}
