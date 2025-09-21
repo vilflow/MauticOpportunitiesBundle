@@ -70,10 +70,12 @@ class OpportunityFieldValueConditionType extends AbstractType
             $supportsValue = !in_array($operator, ['empty', '!empty']);
             $supportsChoices = !in_array($operator, ['empty', '!empty', 'regexp', '!regexp']);
 
+            $rawValue = $data['value'] ?? null;
+
             // Display selectbox for a field with choices, textbox for others
             if (!empty($fieldValues) && $supportsChoices) {
                 $multiple = in_array($operator, ['in', '!in']);
-                $value = $multiple && !is_array($data['value']) ? [$data['value']] : $data['value'];
+                $value = $multiple && !is_array($rawValue) ? (null !== $rawValue ? [$rawValue] : []) : $rawValue;
 
                 $form->add(
                     'value',
