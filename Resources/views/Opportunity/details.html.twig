@@ -7,8 +7,8 @@
     {{ include('@MauticCore/Helper/page_actions.html.twig', {
         item: opportunity,
         templateButtons: {
-            edit: is_granted('opportunities:opportunities:edit'),
-            delete: is_granted('opportunities:opportunities:delete')
+            edit: permissions['opportunities:opportunities:edit']|default(false),
+            delete: permissions['opportunities:opportunities:delete']|default(false)
         },
         routeBase: 'opportunity'
     }) }}
