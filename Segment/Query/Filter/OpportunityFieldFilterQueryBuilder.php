@@ -71,6 +71,7 @@ class OpportunityFieldFilterQueryBuilder extends BaseFilterQueryBuilder
                 if ($useDateOnlyComparison) {
                     // Use literal value for date comparison to avoid type conversion issues
                     $dateValue = is_array($filterParameters) ? reset($filterParameters) : $filterParameters;
+                    $subQueryBuilder->andWhere($tableAlias.'_o.'.$fieldColumn.' IS NOT NULL');
                     $subQueryBuilder->andWhere('DATE('.$tableAlias.'_o.'.$fieldColumn.') != '.$subQueryBuilder->expr()->literal($dateValue));
                     // Don't bind parameters for date comparisons since we're using literals
                     $parameters = null;
@@ -101,7 +102,9 @@ class OpportunityFieldFilterQueryBuilder extends BaseFilterQueryBuilder
                 if ($useDateOnlyComparison) {
                     // For date fields, use DATE() function to compare only the date part
                     // Use literal value to avoid type conversion issues
+                    // Add IS NOT NULL check to ensure NULL dates don't cause comparison failures
                     $dateValue = is_array($filterParameters) ? reset($filterParameters) : $filterParameters;
+                    $subQueryBuilder->andWhere($tableAlias.'_o.'.$fieldColumn.' IS NOT NULL');
                     $subQueryBuilder->andWhere('DATE('.$tableAlias.'_o.'.$fieldColumn.') '.$this->getOperatorSymbol($filterOperator).' '.$subQueryBuilder->expr()->literal($dateValue));
                     // Don't bind parameters for date comparisons since we're using literals
                     $parameters = null;
