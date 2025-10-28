@@ -295,11 +295,11 @@ class Opportunity extends CommonEntity
         $builder->addField('name', Types::STRING, ['columnName' => 'name']);
 
         $builder->createManyToOne('contact', Lead::class)
-            ->addJoinColumn('contact_id', 'id', true, false, 'CASCADE')
+            ->addJoinColumn('contact_id', 'id', false, false, 'CASCADE')
             ->build();
 
         $builder->createManyToOne('event', Event::class)
-            ->addJoinColumn('event_id', 'id', true, false, 'CASCADE')
+            ->addJoinColumn('event_id', 'id', false, false, 'CASCADE')
             ->build();
 
         $builder->addField('dateEntered', Types::DATETIME_MUTABLE, ['columnName' => 'date_entered', 'nullable' => true]);
@@ -357,8 +357,8 @@ class Opportunity extends CommonEntity
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
     {
         $metadata->addPropertyConstraint('opportunityExternalId', new NotBlank(['message' => 'mautic.opportunities.opportunity_external_id.required']));
-        $metadata->addPropertyConstraint('contact', new NotBlank(['message' => 'mautic.opportunities.contact.required']));
-        $metadata->addPropertyConstraint('event', new NotBlank(['message' => 'mautic.opportunities.event.required']));
+        // $metadata->addPropertyConstraint('contact', new NotBlank(['message' => 'mautic.opportunities.contact.required']));
+        // $metadata->addPropertyConstraint('event', new NotBlank(['message' => 'mautic.opportunities.event.required']));
     }
 
     /**
@@ -1072,10 +1072,10 @@ class Opportunity extends CommonEntity
     public static function getStageChoices(): array
     {
         return [
-            'Abstract_Submitted' => 'Abstract_Submitted',
-            'Abstract_Need_Revisions' => 'Abstract_Need_Revisions',
-            'Abstract_Rejected' => 'Abstract_Rejected',
-            'Abstract_Accepted' => 'Abstract_Accepted',
+            'Abstract Submitted' => 'Abstract_Submitted',
+            'Abstract Need Revisions' => 'Abstract_Need_Revisions',
+            'Abstract Rejected' => 'Abstract_Rejected',
+            'Abstract Accepted' => 'Abstract_Accepted',
             'Closed Won' => 'Closed Won',
             'Closed Lost' => 'Closed Lost',
         ];
@@ -1121,9 +1121,9 @@ class Opportunity extends CommonEntity
     public static function getPresentationTypeChoices(): array
     {
         return [
-            'Virtual_Presentation' => 'Virtual_Presentation',
-            'Oral_Poster_Presentation_Student' => 'Oral_Poster_Presentation_Student',
-            'Oral_Poster_Presentation_Regular' => 'Oral_Poster_Presentation_Regular',
+            'Virtual Presentation' => 'Virtual_Presentation',
+            'Oral Poster Presentation Student' => 'Oral_Poster_Presentation_Student',
+            'Oral Poster Presentation Regular' => 'Oral_Poster_Presentation_Regular',
         ];
     }
 
@@ -1133,7 +1133,7 @@ class Opportunity extends CommonEntity
     public static function getRegistrationTypeChoices(): array
     {
         return [
-            'Oral_Poster' => 'Oral_Poster',
+            'Oral Poster' => 'Oral_Poster',
             'Listener' => 'Listener',
             'Virtual' => 'Virtual',
         ];
@@ -1146,7 +1146,7 @@ class Opportunity extends CommonEntity
     {
         return [
             'Paid' => 'Paid',
-            'UnPaid' => 'UnPaid',
+            'Unpaid' => 'UnPaid',
         ];
     }
 
@@ -1157,8 +1157,8 @@ class Opportunity extends CommonEntity
     {
         return [
             'Credit' => 'Credit',
-            'Wire_Trasnfer' => 'Wire_Trasnfer',
-            'Easy_Payment' => 'Easy_Payment',
+            'Wire Transfer' => 'Wire_Trasnfer',
+            'Easy Payment' => 'Easy_Payment',
             'Cash' => 'Cash',
         ];
     }
@@ -1171,8 +1171,8 @@ class Opportunity extends CommonEntity
         return [
             'Accepted' => 'Accepted',
             'Declined' => 'Declined',
-            'Accepted_with_Minor_Revisions' => 'Accepted_with_Minor_Revisions',
-            'Accepted_with_Major_Revisions' => 'Accepted_with_Major_Revisions',
+            'Accepted with Minor Revisions' => 'Accepted_with_Minor_Revisions',
+            'Accepted with Major Revisions' => 'Accepted_with_Major_Revisions',
         ];
     }
 

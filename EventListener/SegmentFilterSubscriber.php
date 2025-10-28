@@ -40,6 +40,13 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // Fetch all events for the event select field
+        $events = $this->entityManager->getRepository(\MauticPlugin\MauticEventsBundle\Entity\Event::class)->findAll();
+        $eventChoices = [];
+        foreach ($events as $eventEntity) {
+            $eventChoices[$eventEntity->getName()] = $eventEntity->getId();
+        }
+
         $choices = [
             // Basic fields
             'opportunity_id' => [
@@ -60,6 +67,15 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
                 'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('text'),
                 'object'     => 'lead',
             ],
+            'opportunity_event' => [
+                'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_event'),
+                'properties' => [
+                    'type' => 'select',
+                    'list' => $eventChoices,
+                ],
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('select'),
+                'object'     => 'lead',
+            ],
             'opportunity_description' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_description'),
                 'properties' => ['type' => 'text'],
@@ -68,7 +84,13 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             ],
             'opportunity_deleted' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_deleted'),
-                'properties' => ['type' => 'boolean'],
+                'properties' => [
+                    'type' => 'boolean',
+                    'list' => [
+                        'Yes' => '1',
+                        'No' => '0',
+                    ],
+                ],
                 'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('boolean'),
                 'object'     => 'lead',
             ],
@@ -104,8 +126,8 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             ],
             'opportunity_date_closed' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_date_closed'),
-                'properties' => ['type' => 'date'],
-                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('date'),
+                'properties' => ['type' => 'date'],  // DATE_MUTABLE - only date, no time
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('default'),
                 'object'     => 'lead',
             ],
             'opportunity_next_step' => [
@@ -133,26 +155,26 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             // Date fields
             'opportunity_date_entered' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_date_entered'),
-                'properties' => ['type' => 'datetime'],
-                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('datetime'),
+                'properties' => ['type' => 'date'],  // DATETIME_MUTABLE in DB, but filter by date only
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('default'),
                 'object'     => 'lead',
             ],
             'opportunity_date_modified' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_date_modified'),
-                'properties' => ['type' => 'datetime'],
-                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('datetime'),
+                'properties' => ['type' => 'date'],  // DATETIME_MUTABLE in DB, but filter by date only
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('default'),
                 'object'     => 'lead',
             ],
             'opportunity_created_at' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_created_at'),
-                'properties' => ['type' => 'datetime'],
-                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('datetime'),
+                'properties' => ['type' => 'date'],  // DATETIME_MUTABLE in DB, but filter by date only
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('default'),
                 'object'     => 'lead',
             ],
             'opportunity_updated_at' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_updated_at'),
-                'properties' => ['type' => 'datetime'],
-                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('datetime'),
+                'properties' => ['type' => 'date'],  // DATETIME_MUTABLE in DB, but filter by date only
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('default'),
                 'object'     => 'lead',
             ],
 
@@ -174,8 +196,8 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             ],
             'opportunity_abstract_book_send_date_c' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_abstract_book_send_date_c'),
-                'properties' => ['type' => 'date'],
-                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('date'),
+                'properties' => ['type' => 'date'],  // DATE_MUTABLE - only date, no time
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('default'),
                 'object'     => 'lead',
             ],
             'opportunity_abstract_review_result_url_c' => [
@@ -186,7 +208,13 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             ],
             'opportunity_abstract_book_dpublication_c' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_abstract_book_dpublication_c'),
-                'properties' => ['type' => 'boolean'],
+                'properties' => [
+                    'type' => 'boolean',
+                    'list' => [
+                        'Yes' => '1',
+                        'No' => '0',
+                    ],
+                ],
                 'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('boolean'),
                 'object'     => 'lead',
             ],
@@ -204,8 +232,8 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             ],
             'opportunity_abstract_result_send_date_c' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_abstract_result_send_date_c'),
-                'properties' => ['type' => 'date'],
-                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('date'),
+                'properties' => ['type' => 'date'],  // DATE_MUTABLE - only date, no time
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('default'),
                 'object'     => 'lead',
             ],
             'opportunity_registration_type_c' => [
@@ -246,8 +274,8 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             ],
             'opportunity_abstract_result_ready_date_c' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_abstract_result_ready_date_c'),
-                'properties' => ['type' => 'date'],
-                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('date'),
+                'properties' => ['type' => 'date'],  // DATE_MUTABLE - only date, no time
+                'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('default'),
                 'object'     => 'lead',
             ],
             'opportunity_paper_title_c' => [
@@ -258,7 +286,13 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             ],
             'opportunity_sms_permission_c' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_sms_permission_c'),
-                'properties' => ['type' => 'boolean'],
+                'properties' => [
+                    'type' => 'boolean',
+                    'list' => [
+                        'Yes' => '1',
+                        'No' => '0',
+                    ],
+                ],
                 'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('boolean'),
                 'object'     => 'lead',
             ],
@@ -291,7 +325,13 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
             ],
             'opportunity_withdraw_c' => [
                 'label'      => $this->translator->trans('mautic.opportunities.segment.opportunity_withdraw_c'),
-                'properties' => ['type' => 'boolean'],
+                'properties' => [
+                    'type' => 'boolean',
+                    'list' => [
+                        'Yes' => '1',
+                        'No' => '0',
+                    ],
+                ],
                 'operators'  => $this->typeOperatorProvider->getOperatorsForFieldType('boolean'),
                 'object'     => 'lead',
             ],
@@ -391,7 +431,7 @@ class SegmentFilterSubscriber implements EventSubscriberInterface
         // Use custom OpportunityFieldFilterQueryBuilder for opportunity segment filters
         $opportunityFields = [
             // Basic fields
-            'opportunity_id', 'opportunity_name', 'opportunity_external_id', 'opportunity_description',
+            'opportunity_id', 'opportunity_name', 'opportunity_external_id', 'opportunity_event', 'opportunity_description',
             'opportunity_deleted', 'opportunity_type', 'opportunity_lead_source', 'opportunity_amount',
             'opportunity_amount_usdollar', 'opportunity_date_closed', 'opportunity_next_step',
             'opportunity_sales_stage', 'opportunity_probability',
