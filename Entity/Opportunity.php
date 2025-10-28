@@ -1072,10 +1072,10 @@ class Opportunity extends CommonEntity
     public static function getStageChoices(): array
     {
         return [
-            'Abstract Submitted' => 'Abstract_Submitted',
-            'Abstract Need Revisions' => 'Abstract_Need_Revisions',
-            'Abstract Rejected' => 'Abstract_Rejected',
-            'Abstract Accepted' => 'Abstract_Accepted',
+            'Abstract_Submitted' => 'Abstract Submitted',
+            'Abstract_Need_Revisions' => 'Abstract Need Revisions',
+            'Abstract_Rejected' => 'Abstract Rejected',
+            'Abstract_Accepted' => 'Abstract Accepted',
             'Closed Won' => 'Closed Won',
             'Closed Lost' => 'Closed Lost',
         ];
@@ -1121,9 +1121,9 @@ class Opportunity extends CommonEntity
     public static function getPresentationTypeChoices(): array
     {
         return [
-            'Virtual Presentation' => 'Virtual_Presentation',
-            'Oral Poster Presentation Student' => 'Oral_Poster_Presentation_Student',
-            'Oral Poster Presentation Regular' => 'Oral_Poster_Presentation_Regular',
+            'Virtual_Presentation' => 'Virtual Presentation',
+            'Oral_Poster_Presentation_Student' => 'Oral Poster Presentation Student',
+            'Oral_Poster_Presentation_Regular' => 'Oral Poster Presentation Regular',
         ];
     }
 
@@ -1133,7 +1133,7 @@ class Opportunity extends CommonEntity
     public static function getRegistrationTypeChoices(): array
     {
         return [
-            'Oral Poster' => 'Oral_Poster',
+            'Oral_Poster' => 'Oral Poster',
             'Listener' => 'Listener',
             'Virtual' => 'Virtual',
         ];
@@ -1146,7 +1146,7 @@ class Opportunity extends CommonEntity
     {
         return [
             'Paid' => 'Paid',
-            'Unpaid' => 'UnPaid',
+            'UnPaid' => 'Unpaid',
         ];
     }
 
@@ -1157,8 +1157,8 @@ class Opportunity extends CommonEntity
     {
         return [
             'Credit' => 'Credit',
-            'Wire Transfer' => 'Wire_Trasnfer',
-            'Easy Payment' => 'Easy_Payment',
+            'Wire_Trasnfer' => 'Wire Transfer',
+            'Easy_Payment' => 'Easy Payment',
             'Cash' => 'Cash',
         ];
     }
@@ -1171,8 +1171,8 @@ class Opportunity extends CommonEntity
         return [
             'Accepted' => 'Accepted',
             'Declined' => 'Declined',
-            'Accepted with Minor Revisions' => 'Accepted_with_Minor_Revisions',
-            'Accepted with Major Revisions' => 'Accepted_with_Major_Revisions',
+            'Accepted_with_Minor_Revisions' => 'Accepted with Minor Revisions',
+            'Accepted_with_Major_Revisions' => 'Accepted with Major Revisions',
         ];
     }
 

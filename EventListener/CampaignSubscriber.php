@@ -51,7 +51,7 @@ class CampaignSubscriber implements EventSubscriberInterface
         // Opportunity Field Value Condition
         if ($event->checkContext('opportunities.field_value')) {
             $field = $config['field'] ?? '';
-            $operator = $config['operator'] ?? 'eq';
+            $operator = $config['operator'] ?? '=';
             $value = $config['value'] ?? '';
 
             if (empty($field)) {
@@ -59,18 +59,25 @@ class CampaignSubscriber implements EventSubscriberInterface
                 return;
             }
 
-            // Handle empty/not empty operators
-            if (in_array($operator, ['empty', '!empty']) && empty($value)) {
-                $value = null;
+            // Check if value is required for this operator
+            $operatorsWithoutValue = ['empty', '!empty'];
+            if (!in_array($operator, $operatorsWithoutValue) && !isset($config['value'])) {
+                $event->setResult(false);
+                return;
             }
 
-            $hasOpportunity = $this->opportunityRepository->contactHasOpportunityByFieldValue(
-                $lead->getId(),
-                $field,
-                $operator,
-                $value
-            );
-            $event->setResult($hasOpportunity);
+            try {
+                $hasOpportunity = $this->opportunityRepository->contactHasOpportunityByFieldValue(
+                    $lead->getId(),
+                    $field,
+                    $operator,
+                    $value
+                );
+                $event->setResult($hasOpportunity);
+            } catch (\Exception $e) {
+                error_log('CAMPAIGN: Opportunity Field Value - ' . $e->getMessage());
+                $event->setResult(false);
+            }
             return;
         }
 
