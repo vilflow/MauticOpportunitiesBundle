@@ -1,52 +1,460 @@
-{% block opportunity_field_value_condition_widget %}
-    <div class="row">
-        <div class="col-xs-6">
-            {{ form_widget(form.field) }}
-        </div>
-        <div class="col-xs-3">
-            {{ form_widget(form.operator) }}
-        </div>
-        <div class="col-xs-3">
-            {{ form_widget(form.value) }}
+{% block _campaignevent_properties_row %}
+<div class="row condition-row">
+    <div class="col-xs-4">
+        {{ form_row(form.field) }}
+    </div>
+    <div class="col-xs-4">
+        {{ form_row(form.operator) }}
+    </div>
+    <div class="col-xs-4">
+        {{ form_row(form.value) }}
+    </div>
+</div>
+
+<div class="row condition-custom-date-row" style="display: none;">
+    <div class="col-sm-offset-4 col-sm-4">
+        <div class="row">
+            <div class="form-group col-xs-12 ">
+                <div class="input-group">
+                    <span class="input-group-addon preaddon">
+                        <i class="symbol-hashtag"></i>
+                    </span>
+                    <input autocomplete="false" type="number" id="opportunity-field-custom-date-interval" class="form-control" value="1" onchange="Mautic.updateOpportunityFieldValueOptions(mQuery('#campaignevent_properties_value'), true)">
+                </div>
+            </div>
         </div>
     </div>
-    <script>
-        if (typeof Mautic.updateOpportunityFieldValues === 'undefined') {
-            Mautic.updateOpportunityFieldValues = function(el) {
-                var wrapper = mQuery(el).closest('form');
-                var fieldSelect = wrapper.find('select[name*="[field]"]');
-                var operatorSelect = wrapper.find('select[name*="[operator]"]');
-                var valueField = wrapper.find('input[name*="[value]"], select[name*="[value]"]');
+    <div class="col-sm-4">
+        <div class="row">
+            <div class="form-group col-xs-12 ">
+                <select id="opportunity-field-custom-date-unit" class="form-control chosen" autocomplete="false" onchange="Mautic.updateOpportunityFieldValueOptions(mQuery('#campaignevent_properties_value'), true)">
+                    {% for interval in ['i', 'h', 'd', 'm', 'y'] %}
+                      <option {% if 'd' == interval %}selected{% endif %} value="{{ interval }}">
+                          {{- ('mautic.campaign.event.intervalunit.choice.' ~ interval)|trans -}}
+                      </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
 
-                if (fieldSelect.length && operatorSelect.length) {
-                    var field = fieldSelect.val();
-                    var operator = operatorSelect.val();
+<style>
+    .opportunitydatepicker {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23999" width="16" height="16"><path d="M7 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm7-8H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3V2h-2v4h-6V2h-2v4zm9 18H4V8h16v16zm-5-5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm5 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-10 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>') !important;
+        background-repeat: no-repeat !important;
+        background-position: right 10px center !important;
+        background-size: 16px !important;
+        padding-right: 35px !important;
+    }
 
-                    // Update form field based on field and operator selection
-                    mQuery.ajax({
-                        url: mauticAjaxUrl,
-                        type: 'POST',
-                        data: {
-                            action: 'campaign:updateOpportunityFieldValueOptions',
-                            field: field,
-                            operator: operator
-                        },
-                        dataType: 'json',
-                        success: function(response) {
-                            if (response.html) {
-                                var newValueField = mQuery(response.html).find('input[name*="[value]"], select[name*="[value]"]');
-                                if (newValueField.length) {
-                                    valueField.replaceWith(newValueField);
+    /* Style HTML5 date input */
+    input[type="date"].opportunitydatepicker {
+        position: relative;
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input[type="date"].opportunitydatepicker::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        border-radius: 4px;
+        margin-right: 2px;
+        opacity: 0.6;
+        filter: invert(0.6);
+    }
+
+    input[type="date"].opportunitydatepicker::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+        filter: invert(0.8);
+    }
+
+    /* Firefox */
+    input[type="date"].opportunitydatepicker::-moz-calendar-picker-indicator {
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    if (typeof Mautic.updateOpportunityFieldValues === 'undefined') {
+        // Store original updateFieldOperatorValue function
+        var originalUpdateFieldOperatorValue = Mautic.updateFieldOperatorValue;
+
+        // Override Mautic.updateFieldOperatorValue to handle opportunity fields with proper action
+        Mautic.updateFieldOperatorValue = function(field, action, valueOnChange, valueOnChangeArguments) {
+            var fieldId = mQuery(field).attr('id');
+            var isOperatorField = fieldId.indexOf('_operator') !== -1;
+            var fieldType = isOperatorField ? 'operator' : 'field';
+            var fieldPrefix = fieldId.slice(0, -1 * fieldType.length);
+            var currentFieldType = mQuery('#' + fieldPrefix + 'value').attr('data-toggle');
+
+            // Check if this is an opportunity field (action contains 'plugin:opportunities')
+            var isOpportunityField = action && action.indexOf('plugin:opportunities') !== -1;
+
+            // For opportunity fields, use custom handling to preserve the Opportunities bundle action
+            if (isOpportunityField) {
+                Mautic.activateLabelLoadingIndicator(fieldId);
+                var fieldAlias = mQuery('#'+fieldPrefix+'field').val();
+                var fieldOperator = mQuery('#'+fieldPrefix+'operator').val();
+
+                Mautic.ajaxActionRequest(action, {'alias': fieldAlias, 'operator': fieldOperator, 'changed': fieldType}, function(response) {
+                    if (typeof response.options != 'undefined') {
+                        var valueField = mQuery('#'+fieldPrefix+'value');
+                        var valueFieldAttrs = {
+                            'class': valueField.attr('class'),
+                            'id': valueField.attr('id'),
+                            'name': valueField.attr('name'),
+                            'autocomplete': valueField.attr('autocomplete'),
+                            'value': valueField.val(),
+                            'data-toggle': currentFieldType,
+                            'data-onload-callback': valueField.attr('data-onload-callback')
+                        };
+
+                        if (mQuery('#'+fieldPrefix+'value_chosen').length) {
+                            valueFieldAttrs['value'] = '';
+                            Mautic.destroyChosen(valueField);
+                        }
+
+                        if (!mQuery.isEmptyObject(response.options) && response.fieldType !== 'number') {
+                            var newValueField = mQuery('<select/>')
+                                .attr('class', valueFieldAttrs['class'])
+                                .attr('id', valueFieldAttrs['id'])
+                                .attr('name', valueFieldAttrs['name'])
+                                .attr('autocomplete', valueFieldAttrs['autocomplete'])
+                                .attr('data-toggle', valueFieldAttrs['data-toggle'])
+                                .attr('data-onload-callback', valueFieldAttrs['data-onload-callback']);
+
+                            var multiple = (fieldOperator === 'in' || fieldOperator === '!in');
+                            if (multiple) {
+                                newValueField.attr('multiple', 'multiple');
+                                var newName = newValueField.attr('name') + '[]';
+                                newValueField.attr('name', newName);
+                                newValueField.attr('data-placeholder', mauticLang['chosenChooseMore']);
+                            }
+
+                            mQuery.each(response.options, function(value, optgroup) {
+                                if (typeof optgroup === 'object') {
+                                    var optgroupEl = mQuery('<optgroup/>').attr('label', value);
+                                    mQuery.each(optgroup, function(optVal, label) {
+                                        var option = Mautic.createOption(optVal, label);
+                                        if (response.optionsAttr && response.optionsAttr[optVal]) {
+                                            mQuery.each(response.optionsAttr[optVal], function(optAttr, optVal) {
+                                                option.attr(optAttr, optVal);
+                                            });
+                                        }
+                                        optgroupEl.append(option)
+                                    });
+                                    newValueField.append(optgroupEl);
+                                } else {
+                                    var option = Mautic.createOption(value, optgroup);
+                                    if (response.optionsAttr && response.optionsAttr[value]) {
+                                        mQuery.each(response.optionsAttr[value], function(optAttr, optVal) {
+                                            option.attr(optAttr, optVal);
+                                        });
+                                    }
+                                    newValueField.append(option);
                                 }
+                            });
+
+                            // For date fields with custom DateInterval values (e.g., +P16D), adjust before setting value
+                            var savedValue = valueFieldAttrs['value'];
+                            var predefinedValues = ['custom', 'anniversary', '+P0D', '-P1D', '+P1D'];
+                            if ('date' === valueFieldAttrs['data-toggle'] && savedValue && /^[+-]PT?[0-9]+[DIMHY]$/i.test(savedValue) && !predefinedValues.includes(savedValue)) {
+                                // Find custom option and set its value to the DateInterval
+                                var customOpt = newValueField.find('option[data-custom=1]');
+                                if (customOpt.length) {
+                                    customOpt.attr('value', savedValue);
+                                    savedValue = savedValue;
+                                }
+                            }
+
+                            newValueField.val(savedValue);
+                            valueField.replaceWith(newValueField);
+                            Mautic.activateChosenSelect(newValueField);
+
+                            // For date fields, watch for value changes
+                            if ('date' === valueFieldAttrs['data-toggle']) {
+                                var selectElem = mQuery('#' + valueFieldAttrs['id']);
+
+                                setTimeout(function() {
+                                    var currentValue = selectElem.val();
+                                    if ('custom' === currentValue) {
+                                        mQuery('.condition-custom-date-row').show();
+                                        setTimeout(function() {
+                                            var unitSelect = mQuery('#opportunity-field-custom-date-unit');
+                                            if (unitSelect.length && !mQuery('#opportunity-field-custom-date-unit_chosen').length) {
+                                                Mautic.activateChosenSelect(unitSelect);
+                                            }
+                                        }, 100);
+                                    } else {
+                                        mQuery('.condition-custom-date-row').hide();
+                                    }
+                                }, 200);
+                            }
+                        } else if (mQuery.isEmptyObject(response.options) || response.fieldType === 'number') {
+                            // For date fields or number fields with no options, create a text/number input
+                            var inputType = response.fieldType === 'number' ? 'number' : 'text';
+                            var newValueField = mQuery('<input/>')
+                                .attr('class', valueFieldAttrs['class'])
+                                .attr('id', valueFieldAttrs['id'])
+                                .attr('name', valueFieldAttrs['name'])
+                                .attr('autocomplete', valueFieldAttrs['autocomplete'])
+                                .attr('type', inputType)
+                                .attr('data-toggle', valueFieldAttrs['data-toggle'])
+                                .attr('data-onload-callback', valueFieldAttrs['data-onload-callback'])
+                                .val(valueFieldAttrs['value']);
+
+                            // Add datepicker class for date fields
+                            if ('date' === response.fieldType) {
+                                newValueField.addClass('opportunitydatepicker');
+                                newValueField.attr('placeholder', 'yyyy-mm-dd');
+                            }
+
+                            valueField.replaceWith(newValueField);
+
+                            // Initialize datepicker if it's a date field
+                            if ('date' === response.fieldType) {
+                                setTimeout(function() {
+                                    Mautic.initOpportunityDatePicker(mQuery('#' + valueFieldAttrs['id']));
+                                }, 100);
+                            }
+                        }
+
+                        if (response.operators) {
+                            var operatorField = mQuery('#'+fieldPrefix+'operator');
+                            var currentOperator = operatorField.val();
+
+                            // Destroy Chosen if it exists
+                            if (mQuery('#'+fieldPrefix+'operator_chosen').length) {
+                                Mautic.destroyChosen(operatorField);
+                            }
+
+                            operatorField.html('');
+                            mQuery.each(response.operators, function(label, value) {
+                                operatorField.append(mQuery('<option/>').attr('value', value).text(label));
+                            });
+                            operatorField.val(currentOperator);
+                            operatorField.attr('onchange', 'Mautic.updateOpportunityFieldValues(this)');
+
+                            Mautic.activateChosenSelect(operatorField);
+                        }
+
+                        if (response.disabled) {
+                            mQuery('#'+fieldPrefix+'value').attr('disabled', 'disabled');
+                        } else {
+                            mQuery('#'+fieldPrefix+'value').removeAttr('disabled');
+                        }
+                    }
+
+                    if (valueOnChange && typeof valueOnChange == 'function') {
+                        mQuery('#'+fieldPrefix+'value').off('change').on('change', function () {
+                            if (typeof valueOnChangeArguments != 'object') {
+                                valueOnChangeArguments = [];
+                            }
+                            valueOnChangeArguments.unshift(mQuery('#'+fieldPrefix+'value'));
+                            valueOnChange.apply(null, valueOnChangeArguments);
+                        });
+
+                        setTimeout(function() {
+                            var valueField = mQuery('#'+fieldPrefix+'value');
+                            if (valueField.length && valueField.is('select')) {
+                                var currentValue = valueField.val();
+                                var predefinedValues = ['custom', 'anniversary', '+P0D', '-P1D', '+P1D'];
+                                if (currentValue && /^[+-]PT?[0-9]+[DIMHY]$/i.test(currentValue) && !predefinedValues.includes(currentValue)) {
+                                    var customOption = valueField.find('option[data-custom=1]');
+                                    if (customOption.length && customOption.prop('selected')) {
+                                        valueOnChange.apply(null, [valueField, false]);
+                                    }
+                                }
+                            }
+                        }, 300);
+                    }
+                    Mautic.removeLabelLoadingIndicator();
+                }, false, false, "POST");
+            } else {
+                // Use original function for non-opportunity fields
+                originalUpdateFieldOperatorValue.apply(this, arguments);
+            }
+        };
+
+        Mautic.updateOpportunityFieldValues = function (field) {
+            mQuery('.condition-custom-date-row').hide();
+            Mautic.updateFieldOperatorValue(field, 'plugin:opportunities:updateOpportunityFieldValues', Mautic.updateOpportunityFieldValueOptions, [true]);
+
+            var fieldId = mQuery(field).attr('id');
+            var fieldPrefix = fieldId.slice(0, -5);
+            setTimeout(function () {
+                mQuery('#' + fieldPrefix + 'operator').attr('onchange', 'Mautic.updateOpportunityFieldValues(this)');
+            }, 0);
+        };
+
+        Mautic.updateOpportunityFieldValueOptions = function (field, updating) {
+            var fieldId = mQuery(field).attr('id');
+            var fieldPrefix = fieldId.slice(0, -5);
+            var operator = mQuery('#' + fieldPrefix + 'operator').val();
+
+            // Check if operator is 'date' (not field type!)
+            if ('date' === operator) {
+                var customOption = mQuery(field).find('option[data-custom=1]');
+                var value = mQuery(field).val();
+
+                var predefinedValues = ['anniversary', '+P0D', '-P1D', '+P1D'];
+                var customOptionSelected = customOption.length && customOption.is(':selected');
+                var isCustomSelected = customOptionSelected || value === 'custom' || (value && /^[+-]PT?[0-9]+[DIMHY]$/i.test(value) && !predefinedValues.includes(value));
+
+                if (isCustomSelected) {
+                    if (!updating) {
+                        if (value && value !== 'custom') {
+                            var regex = /(\+|-)(PT?)([0-9]*)([DIMHY])$/g;
+                            var match = regex.exec(value);
+                            if (match) {
+                                var interval = ('-' === match[1]) ? match[1] + match[3] : match[3];
+                                var unit = ('PT' === match[2] && 'M' === match[4]) ? 'i' : match[4];
+
+                                mQuery('#opportunity-field-custom-date-interval').val(interval);
+                                mQuery('#opportunity-field-custom-date-unit').val(unit.toLowerCase());
+                            }
+                        } else if (value === 'custom') {
+                            mQuery('#opportunity-field-custom-date-interval').val(1);
+                            mQuery('#opportunity-field-custom-date-unit').val('d');
+                        }
+                    } else {
+                        var interval = mQuery('#opportunity-field-custom-date-interval').val();
+                        var unit = mQuery('#opportunity-field-custom-date-unit').val();
+
+                        var prefix = ("i" == unit || "h" == unit) ? "PT" : "P";
+                        if ("i" === unit) {
+                            unit = "m";
+                        }
+
+                        unit = unit.toUpperCase();
+
+                        var operatorSign = "+";
+                        if (parseInt(interval) < 0) {
+                            operatorSign = "-";
+                            interval = -1 * parseInt(interval);
+                        }
+                        var newValue = operatorSign + prefix + interval + unit;
+                        customOption.attr('value', newValue);
+                        customOption.prop('selected', true);
+                        mQuery(field).val(newValue);
+                    }
+                    mQuery('.condition-custom-date-row').show();
+                    setTimeout(function() {
+                        var unitSelect = mQuery('#opportunity-field-custom-date-unit');
+                        if (unitSelect.length && !mQuery('#opportunity-field-custom-date-unit_chosen').length) {
+                            Mautic.activateChosenSelect(unitSelect);
+                        }
+                    }, 100);
+                } else {
+                    mQuery('.condition-custom-date-row').hide();
+                }
+            } else {
+                mQuery('.condition-custom-date-row').hide();
+            }
+        };
+
+        Mautic.initOpportunityDatePicker = function(field) {
+            var $field = mQuery(field);
+
+            if (!$field.length) {
+                return;
+            }
+
+            if (typeof $field.datetimepicker === 'function') {
+                try {
+                    $field.datetimepicker({
+                        format: 'Y-m-d',
+                        closeOnDateSelect: true,
+                        validateOnBlur: false,
+                        scrollMonth: false,
+                        scrollInput: false,
+                        timepicker: false
+                    });
+                    return;
+                } catch(e) {
+                    // If datetimepicker fails, continue to HTML5
+                }
+            }
+
+            if ($field.attr('type') === 'text') {
+                $field.attr('type', 'date');
+                var currentVal = $field.val();
+                if (currentVal && !currentVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    try {
+                        var date = new Date(currentVal);
+                        if (!isNaN(date.getTime())) {
+                            var year = date.getFullYear();
+                            var month = String(date.getMonth() + 1).padStart(2, '0');
+                            var day = String(date.getDate()).padStart(2, '0');
+                            $field.val(year + '-' + month + '-' + day);
+                        }
+                    } catch(e) {
+                        // Leave as is
+                    }
+                }
+            }
+        };
+
+        Mautic.initializeOpportunityDatePickers = function() {
+            mQuery('.opportunitydatepicker').each(function() {
+                Mautic.initOpportunityDatePicker(this);
+            });
+        };
+
+        Mautic.initOpportunityFieldValueUi = function() {
+            setTimeout(function() {
+                Mautic.initializeOpportunityDatePickers();
+
+                mQuery('input.opportunity-date-value-placeholder[data-toggle="date"]').each(function() {
+                    var valueInput = mQuery(this);
+                    var fieldId = valueInput.attr('id');
+                    var fieldPrefix = fieldId.replace('_value', '');
+                    var operator = mQuery('#' + fieldPrefix + '_operator').val();
+                    var fieldSelect = mQuery('#' + fieldPrefix + '_field');
+
+                    if ('date' === operator && fieldSelect.length) {
+                        Mautic.updateOpportunityFieldValues(fieldSelect[0]);
+                    }
+                });
+
+                mQuery('select[data-toggle="date"]').each(function() {
+                    var selectedValue = mQuery(this).val();
+                    if ('custom' === selectedValue) {
+                        mQuery('.condition-custom-date-row').show();
+                    } else {
+                        mQuery('.condition-custom-date-row').hide();
+                    }
+
+                    mQuery(this).off('change.opportunityfieldcustom').on('change.opportunityfieldcustom', function() {
+                        var value = mQuery(this).val();
+                        if ('custom' === value) {
+                            mQuery('.condition-custom-date-row').show();
+                        } else {
+                            mQuery('.condition-custom-date-row').hide();
+                        }
+                    });
+                });
+
+                mQuery('form').off('submit.opportunityfieldcustom').on('submit.opportunityfieldcustom', function() {
+                    mQuery('select[id$="_properties_value"]').each(function() {
+                        var valueSelect = mQuery(this);
+                        var fieldId = valueSelect.attr('id');
+                        var fieldPrefix = fieldId.replace('_value', '');
+                        var operator = mQuery('#' + fieldPrefix + '_operator').val();
+
+                        if ('date' === operator) {
+                            var customOption = valueSelect.find('option[data-custom=1]');
+                            if (customOption.length && customOption.prop('selected')) {
+                                Mautic.updateOpportunityFieldValueOptions(valueSelect, true);
                             }
                         }
                     });
-                }
-            };
+                });
+            }, 500);
+        };
+    }
 
-            Mautic.updateOpportunityFieldValueOptions = function(el) {
-                // This function can be used for additional field value options updates
-            };
-        }
-    </script>
+    if (typeof Mautic.initOpportunityFieldValueUi === 'function') {
+        Mautic.initOpportunityFieldValueUi();
+    }
+</script>
 {% endblock %}

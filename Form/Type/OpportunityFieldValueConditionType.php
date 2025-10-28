@@ -2,17 +2,17 @@
 
 namespace MauticPlugin\MauticOpportunitiesBundle\Form\Type;
 
-use Mautic\CoreBundle\Helper\ArrayHelper;
-use Mautic\CoreBundle\Translation\Translator;
-use Mautic\LeadBundle\Helper\FormFieldHelper;
-use MauticPlugin\MauticOpportunitiesBundle\Entity\Opportunity;
+use Mautic\LeadBundle\Model\LeadModel;
+use MauticPlugin\MauticOpportunitiesBundle\Helper\OpportunityFieldMetadataHelper;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Mautic\CoreBundle\Translation\Translator;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use MauticPlugin\MauticOpportunitiesBundle\Form\Type\OpportunityFieldsType;
 
 /**
  * @extends AbstractType<mixed>
@@ -21,6 +21,9 @@ class OpportunityFieldValueConditionType extends AbstractType
 {
     public function __construct(
         protected Translator $translator,
+        protected LeadModel $leadModel,
+        protected OpportunityFieldMetadataHelper $opportunityFieldMetadataHelper,
+
     ) {
     }
 
@@ -28,18 +31,18 @@ class OpportunityFieldValueConditionType extends AbstractType
     {
         $builder->add(
             'field',
-            ChoiceType::class,
+            OpportunityFieldsType::class,
             [
-                'label' => 'mautic.opportunities.campaign.condition.field',
-                'label_attr' => ['class' => 'control-label'],
-                'choices' => $this->getOpportunityFieldChoices(),
-                'placeholder' => 'mautic.core.select',
-                'attr' => [
-                    'class' => 'form-control',
-                    'tooltip' => 'mautic.opportunities.campaign.condition.field_descr',
+                'label'                 => 'mautic.lead.campaign.event.field',
+                'label_attr'            => ['class' => 'control-label'],
+                'multiple'              => false,
+                'placeholder'           => 'mautic.core.select',
+                'attr'                  => [
+                    'class'    => 'form-control',
+                    'tooltip'  => 'mautic.lead.campaign.event.field_descr',
                     'onchange' => 'Mautic.updateOpportunityFieldValues(this)',
                 ],
-                'required' => true,
+                'required'    => true,
                 'constraints' => [
                     new NotBlank(
                         ['message' => 'mautic.core.value.required']
@@ -48,65 +51,162 @@ class OpportunityFieldValueConditionType extends AbstractType
             ]
         );
 
-        // Function to add 'template' choice field dynamically
+        // function to add 'template' choice field dynamically
         $func = function (FormEvent $e): void {
             $data = $e->getData();
             $form = $e->getForm();
 
             $fieldValues = null;
-            $fieldType = null;
-            $choiceAttr = [];
-            $operator = '=';
+            $fieldType   = null;
+            $choiceAttr  = [];
+            $operator    = '=';
 
             if (isset($data['field'])) {
-                $field = $data['field'];
-                $operator = $data['operator'] ?? 'eq';
+                $selectedField = $data['field'];
+                $operator = $data['operator'] ?? '=';
 
-                // Get field values based on the opportunity field
-                $fieldValues = $this->getFieldValues($field);
-                $fieldType = $this->getFieldType($field);
+                $fieldType = $this->opportunityFieldMetadataHelper->getFieldType($selectedField);
+
+                $currentValue = $data['value'] ?? null;
+                $optionsMeta = $this->opportunityFieldMetadataHelper->getFieldOptions($selectedField, $operator, $currentValue);
+                if (!empty($optionsMeta['options'])) {
+                    $fieldValues = $optionsMeta['options'];
+                    $customChoiceValue = $optionsMeta['customChoiceValue'];
+                    $optionsAttr = $optionsMeta['optionsAttr'];
+                    if (null !== $customChoiceValue) {
+                        $choiceAttr = function ($value, $key, $index) use ($customChoiceValue, $optionsAttr): array {
+                            if ($customChoiceValue === $value) {
+                                return ['data-custom' => 1];
+                            }
+                            return $optionsAttr[$value] ?? [];
+                        };
+                    } elseif (!empty($optionsAttr)) {
+                        $choiceAttr = function ($value, $key, $index) use ($optionsAttr): array {
+                            return $optionsAttr[$value] ?? [];
+                        };
+                    }
+                }
             }
 
-            $supportsValue = !in_array($operator, ['empty', '!empty']);
+            $supportsValue   = !in_array($operator, ['empty', '!empty']);
             $supportsChoices = !in_array($operator, ['empty', '!empty', 'regexp', '!regexp']);
 
-            $rawValue = $data['value'] ?? null;
+            // Check if field allows freeform input and current value
+            $rawSubmittedValue = $data['value'] ?? null;
+            $hasCurrentValue = !(
+                null === $rawSubmittedValue
+                || (is_string($rawSubmittedValue) && '' === $rawSubmittedValue)
+                || (is_array($rawSubmittedValue) && [] === $rawSubmittedValue)
+            );
+            $allowsFreeform = isset($data['field']) && $this->opportunityFieldMetadataHelper->allowsFreeformInput($data['field']);
 
             // Display selectbox for a field with choices, textbox for others
-            if (!empty($fieldValues) && $supportsChoices) {
+            // For fields that allow freeform input, only show dropdown if there's a current value that matches predefined options
+            if ((!empty($fieldValues) || 'select' === $fieldType) && $supportsChoices) {
+                $valueMatchesPredefinedOptions = static function ($value) use ($fieldValues): bool {
+                    // If no fieldValues, can't match predefined options
+                    if (empty($fieldValues)) {
+                        return false;
+                    }
+
+                    if (is_array($value)) {
+                        foreach ($value as $item) {
+                            if (!isset($fieldValues[$item ?? ''])) {
+                                return false;
+                            }
+                        }
+
+                        return [] !== $value;
+                    }
+
+                    return isset($fieldValues[$value ?? '']);
+                };
+
+                if ($allowsFreeform && $hasCurrentValue && !$valueMatchesPredefinedOptions($rawSubmittedValue)) {
+                    $shouldShowAsText = true;
+                } else {
+                    $shouldShowAsText = false;
+                }
+            } else {
+                $shouldShowAsText = true;
+            }
+
+            // For date fields with 'date' operator, show select with predefined options
+            // For other operators, show date picker input directly
+            if ('date' === $fieldType && !empty($fieldValues) && $supportsChoices && 'date' === $operator) {
                 $multiple = in_array($operator, ['in', '!in']);
-                $value = $multiple && !is_array($rawValue) ? (null !== $rawValue ? [$rawValue] : []) : $rawValue;
+                $rawValue = $data['value'] ?? null;
+                $value    = $multiple && !is_array($rawValue) ? (null !== $rawValue ? [$rawValue] : []) : $rawValue;
+
+                $form->add(
+                    'value',
+                    TextType::class,
+                    [
+                        'label'       => 'mautic.form.field.form.value',
+                        'label_attr'  => ['class' => 'control-label'],
+                        'attr'        => [
+                            'class'                => 'form-control opportunity-date-value-placeholder',
+                            'onchange'             => 'Mautic.updateOpportunityFieldValueOptions(this)',
+                            'data-toggle'          => $fieldType,
+                            'data-onload-callback' => 'updateOpportunityFieldValueOptions',
+                        ],
+                        'required'    => $supportsValue,
+                        'constraints' => $supportsValue ? [
+                            new NotBlank(
+                                ['message' => 'mautic.core.value.required']
+                            ),
+                        ] : [],
+                        'data'        => $value,
+                    ]
+                );
+            } elseif (!$shouldShowAsText && ((!empty($fieldValues) || 'select' === $fieldType) && $supportsChoices)) {
+                $multiple = in_array($operator, ['in', '!in']);
+                $rawValue = $data['value'] ?? null;
+                $value    = $multiple && !is_array($rawValue) ? (null !== $rawValue ? [$rawValue] : []) : $rawValue;
 
                 $form->add(
                     'value',
                     ChoiceType::class,
                     [
-                        'choices' => array_flip($fieldValues),
-                        'label' => 'mautic.form.field.form.value',
-                        'label_attr' => ['class' => 'control-label'],
-                        'attr' => [
-                            'class' => 'form-control',
-                            'onchange' => 'Mautic.updateOpportunityFieldValueOptions(this)',
-                            'data-toggle' => $fieldType,
+                        // Symfony expects 'label' => 'value'
+                        'choices'           => !empty($fieldValues) ? array_flip($fieldValues) : [],
+                        'label'             => 'mautic.form.field.form.value',
+                        'label_attr'        => ['class' => 'control-label'],
+                        'attr'              => [
+                            'class'                => 'form-control',
+                            'onchange'             => 'Mautic.updateOpportunityFieldValueOptions(this)',
+                            'data-toggle'          => $fieldType,
                             'data-onload-callback' => 'updateOpportunityFieldValueOptions',
                         ],
                         'choice_attr' => $choiceAttr,
-                        'required' => true,
-                        'constraints' => [
+                        'required'    => $supportsValue,
+                        'constraints' => $supportsValue ? [
                             new NotBlank(
                                 ['message' => 'mautic.core.value.required']
                             ),
-                        ],
+                        ] : [],
                         'multiple' => $multiple,
-                        'data' => $value,
+                        'data'     => $value,
                     ]
                 );
             } else {
                 $attr = [
-                    'class' => 'form-control',
-                    'data-toggle' => $fieldType,
+                    'class'                => 'form-control',
+                    'data-toggle'          => $fieldType,
                     'data-onload-callback' => 'updateOpportunityFieldValueOptions',
                 ];
+
+                // Add datepicker for date/datetime fields
+                if ('date' === $fieldType) {
+                    $attr['class'] .= ' opportunitydatepicker';
+                    $attr['placeholder'] = 'yyyy-mm-dd';
+                }
+
+                // Add datalist support for freeform fields with predefined options
+                if ($allowsFreeform && !empty($fieldValues)) {
+                    $attr['list'] = 'opportunity_field_options_' . ($data['field'] ?? '');
+                    $attr['data-options'] = json_encode(array_values($fieldValues));
+                }
 
                 if (!$supportsValue) {
                     $attr['disabled'] = 'disabled';
@@ -116,9 +216,9 @@ class OpportunityFieldValueConditionType extends AbstractType
                     'value',
                     TextType::class,
                     [
-                        'label' => 'mautic.form.field.form.value',
-                        'label_attr' => ['class' => 'control-label'],
-                        'attr' => $attr,
+                        'label'       => 'mautic.form.field.form.value',
+                        'label_attr'  => ['class' => 'control-label'],
+                        'attr'        => $attr,
                         'constraints' => ($supportsValue) ? [
                             new NotBlank(
                                 ['message' => 'mautic.core.value.required']
@@ -132,10 +232,10 @@ class OpportunityFieldValueConditionType extends AbstractType
                 'operator',
                 ChoiceType::class,
                 [
-                    'choices' => $this->getOperatorsForFieldType($fieldType),
-                    'label' => 'mautic.lead.lead.submitaction.operator',
-                    'label_attr' => ['class' => 'control-label'],
-                    'attr' => [
+                    'choices'           => $this->leadModel->getOperatorsForFieldType(null == $fieldType ? 'default' : $fieldType, ['date']),
+                    'label'             => 'mautic.lead.lead.submitaction.operator',
+                    'label_attr'        => ['class' => 'control-label'],
+                    'attr'              => [
                         'onchange' => 'Mautic.updateOpportunityFieldValues(this)',
                     ],
                 ]
@@ -147,181 +247,8 @@ class OpportunityFieldValueConditionType extends AbstractType
         $builder->addEventListener(FormEvents::PRE_SUBMIT, $func);
     }
 
-    private function getOpportunityFieldChoices(): array
-    {
-        return [
-            'mautic.opportunities.field.name' => 'name',
-            'mautic.opportunities.field.description' => 'description',
-            'mautic.opportunities.field.opportunity_type' => 'opportunityType',
-            'mautic.opportunities.field.lead_source' => 'leadSource',
-            'mautic.opportunities.field.amount' => 'amount',
-            'mautic.opportunities.field.amount_usdollar' => 'amountUsdollar',
-            'mautic.opportunities.field.date_closed' => 'dateClosed',
-            'mautic.opportunities.field.next_step' => 'nextStep',
-            'mautic.opportunities.field.sales_stage' => 'salesStage',
-            'mautic.opportunities.field.probability' => 'probability',
-            'mautic.opportunities.field.institution_c' => 'institutionC',
-            'mautic.opportunities.field.review_result_c' => 'reviewResultC',
-            'mautic.opportunities.field.abstract_book_send_date_c' => 'abstractBookSendDateC',
-            'mautic.opportunities.field.abstract_review_result_url_c' => 'abstractReviewResultUrlC',
-            'mautic.opportunities.field.abstract_book_dpublication_c' => 'abstractBookDpublicationC',
-            'mautic.opportunities.field.extra_paper_c' => 'extraPaperC',
-            'mautic.opportunities.field.sales_receipt_url_c' => 'salesReceiptUrlC',
-            'mautic.opportunities.field.abstract_result_send_date_c' => 'abstractResultSendDateC',
-            'mautic.opportunities.field.registration_type_c' => 'registrationTypeC',
-            'mautic.opportunities.field.abstract_c' => 'abstractC',
-            'mautic.opportunities.field.abstract_book_information_c' => 'abstractBookInformationC',
-            'mautic.opportunities.field.payment_status_c' => 'paymentStatusC',
-            'mautic.opportunities.field.coupon_code_c' => 'couponCodeC',
-            'mautic.opportunities.field.abstract_result_ready_date_c' => 'abstractResultReadyDateC',
-            'mautic.opportunities.field.paper_title_c' => 'paperTitleC',
-            'mautic.opportunities.field.sms_permission_c' => 'smsPermissionC',
-            'mautic.opportunities.field.jjwg_maps_geocode_status_c' => 'jjwgMapsGeocodeStatusC',
-            'mautic.opportunities.field.invoice_url_c' => 'invoiceUrlC',
-            'mautic.opportunities.field.presentation_type_c' => 'presentationTypeC',
-            'mautic.opportunities.field.invitation_letter_url_c' => 'invitationLetterUrlC',
-            'mautic.opportunities.field.withdraw_c' => 'withdrawC',
-            'mautic.opportunities.field.keywords_c' => 'keywordsC',
-            'mautic.opportunities.field.jjwg_maps_lng_c' => 'jjwgMapsLngC',
-            'mautic.opportunities.field.jjwg_maps_lat_c' => 'jjwgMapsLatC',
-            'mautic.opportunities.field.transaction_id_c' => 'transactionIdC',
-            'mautic.opportunities.field.co_authors_names_c' => 'coAuthorsNamesC',
-            'mautic.opportunities.field.abstract_attachment_c' => 'abstractAttachmentC',
-            'mautic.opportunities.field.acceptance_letter_url_c' => 'acceptanceLetterUrlC',
-            'mautic.opportunities.field.payment_channel_c' => 'paymentChannelC',
-            'mautic.opportunities.field.wire_transfer_attachment_c' => 'wireTransferAttachmentC',
-            'mautic.opportunities.field.jjwg_maps_address_c' => 'jjwgMapsAddressC',
-            'mautic.opportunities.field.opportunity_external_id' => 'opportunityExternalId',
-            'mautic.opportunities.field.invitation_url' => 'invitationUrl',
-            'mautic.opportunities.field.suitecrm_id' => 'suitecrmId',
-        ];
-    }
-
-    private function getFieldValues(?string $field): ?array
-    {
-        if (null === $field) {
-            return null;
-        }
-
-        switch ($field) {
-            case 'salesStage':
-                return Opportunity::getStageChoices();
-            case 'opportunityType':
-                return Opportunity::getOpportunityTypeChoices();
-            case 'leadSource':
-                return Opportunity::getLeadSourceChoices();
-            case 'presentationTypeC':
-                return Opportunity::getPresentationTypeChoices();
-            case 'registrationTypeC':
-                return Opportunity::getRegistrationTypeChoices();
-            case 'paymentStatusC':
-                return Opportunity::getPaymentStatusChoices();
-            case 'paymentChannelC':
-                return Opportunity::getPaymentChannelChoices();
-            case 'reviewResultC':
-                return Opportunity::getReviewResultChoices();
-            case 'abstractBookDpublicationC':
-            case 'smsPermissionC':
-            case 'withdrawC':
-                return [
-                    0 => $this->translator->trans('mautic.core.form.no'),
-                    1 => $this->translator->trans('mautic.core.form.yes'),
-                ];
-            default:
-                return null;
-        }
-    }
-
-    private function getFieldType(?string $field): string
-    {
-        if (null === $field) {
-            return 'text';
-        }
-
-        switch ($field) {
-            case 'amount':
-            case 'amountUsdollar':
-            case 'probability':
-            case 'jjwgMapsLngC':
-            case 'jjwgMapsLatC':
-                return 'number';
-            case 'dateClosed':
-            case 'abstractBookSendDateC':
-            case 'abstractResultSendDateC':
-            case 'abstractResultReadyDateC':
-                return 'date';
-            case 'abstractBookDpublicationC':
-            case 'smsPermissionC':
-            case 'withdrawC':
-                return 'boolean';
-            case 'salesStage':
-            case 'opportunityType':
-            case 'leadSource':
-            case 'presentationTypeC':
-            case 'registrationTypeC':
-            case 'paymentStatusC':
-            case 'paymentChannelC':
-            case 'reviewResultC':
-                return 'select';
-            default:
-                return 'text';
-        }
-    }
-
-    private function getOperatorsForFieldType(?string $fieldType): array
-    {
-        $operators = [
-            'text' => [
-                'mautic.core.operator.equals' => 'eq',
-                'mautic.core.operator.not.equals' => 'neq',
-                'mautic.core.operator.contains' => 'like',
-                'mautic.core.operator.not.contains' => '!like',
-                'mautic.core.operator.starts.with' => 'startsWith',
-                'mautic.core.operator.ends.with' => 'endsWith',
-                'mautic.core.operator.empty' => 'empty',
-                'mautic.core.operator.not.empty' => '!empty',
-                'mautic.core.operator.regexp' => 'regexp',
-                'mautic.core.operator.not.regexp' => '!regexp',
-            ],
-            'number' => [
-                'mautic.core.operator.equals' => 'eq',
-                'mautic.core.operator.not.equals' => 'neq',
-                'mautic.core.operator.greater.than' => 'gt',
-                'mautic.core.operator.greater.than.equal' => 'gte',
-                'mautic.core.operator.less.than' => 'lt',
-                'mautic.core.operator.less.than.equal' => 'lte',
-                'mautic.core.operator.empty' => 'empty',
-                'mautic.core.operator.not.empty' => '!empty',
-            ],
-            'date' => [
-                'mautic.core.operator.equals' => 'eq',
-                'mautic.core.operator.not.equals' => 'neq',
-                'mautic.core.operator.greater.than' => 'gt',
-                'mautic.core.operator.greater.than.equal' => 'gte',
-                'mautic.core.operator.less.than' => 'lt',
-                'mautic.core.operator.less.than.equal' => 'lte',
-                'mautic.core.operator.empty' => 'empty',
-                'mautic.core.operator.not.empty' => '!empty',
-            ],
-            'boolean' => [
-                'mautic.core.operator.equals' => 'eq',
-                'mautic.core.operator.not.equals' => 'neq',
-            ],
-            'select' => [
-                'mautic.core.operator.equals' => 'eq',
-                'mautic.core.operator.not.equals' => 'neq',
-                'mautic.core.operator.in' => 'in',
-                'mautic.core.operator.not.in' => '!in',
-                'mautic.core.operator.empty' => 'empty',
-                'mautic.core.operator.not.empty' => '!empty',
-            ],
-        ];
-
-        return $operators[$fieldType ?? 'text'] ?? $operators['text'];
-    }
-
     public function getBlockPrefix(): string
     {
-        return 'opportunity_field_value_condition';
+        return 'campaignevent_opportunity_field_value';
     }
 }

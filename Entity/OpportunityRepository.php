@@ -78,14 +78,47 @@ class OpportunityRepository extends CommonRepository
 
         $fieldAlias = 'o.' . $field;
 
+        // Check if this is a date field
+        $isDateField = $this->isDateField($field);
+
+        // For date fields, convert value to date-only format and use DATE() or SUBSTRING()
+        if ($isDateField && in_array($operator, ['eq', 'neq', 'gt', 'gte', 'lt', 'lte'])) {
+            $dateValue = $this->convertToDateOnly($value);
+
+            // Check field type from metadata
+            $metadata = $this->_em->getClassMetadata(Opportunity::class);
+            $useDateFunction = false;
+
+            if ($metadata->hasField($field)) {
+                $fieldMapping = $metadata->getFieldMapping($field);
+                $fieldType = $fieldMapping['type'] ?? 'string';
+                // For DATETIME_MUTABLE fields, use DATE() function
+                $useDateFunction = in_array($fieldType, ['datetime', 'datetimetz', 'datetime_immutable']);
+            }
+
+            $columnExpression = $useDateFunction ? 'DATE(' . $fieldAlias . ')' : $fieldAlias;
+        }
+
         switch ($operator) {
             case 'eq':
-                $qb->andWhere($fieldAlias . ' = :value');
-                $qb->setParameter('value', $value);
+                if ($isDateField && isset($columnExpression)) {
+                    $qb->andWhere($fieldAlias . ' IS NOT NULL');
+                    $qb->andWhere($columnExpression . ' = :value');
+                    $qb->setParameter('value', $dateValue);
+                } else {
+                    $qb->andWhere($fieldAlias . ' = :value');
+                    $qb->setParameter('value', $value);
+                }
                 break;
             case 'neq':
-                $qb->andWhere($fieldAlias . ' != :value');
-                $qb->setParameter('value', $value);
+                if ($isDateField && isset($columnExpression)) {
+                    $qb->andWhere($fieldAlias . ' IS NOT NULL');
+                    $qb->andWhere($columnExpression . ' != :value');
+                    $qb->setParameter('value', $dateValue);
+                } else {
+                    $qb->andWhere($fieldAlias . ' != :value');
+                    $qb->setParameter('value', $value);
+                }
                 break;
             case 'like':
                 $qb->andWhere($fieldAlias . ' LIKE :value');
@@ -104,20 +137,44 @@ class OpportunityRepository extends CommonRepository
                 $qb->setParameter('value', '%' . $value);
                 break;
             case 'gt':
-                $qb->andWhere($fieldAlias . ' > :value');
-                $qb->setParameter('value', $value);
+                if ($isDateField && isset($columnExpression)) {
+                    $qb->andWhere($fieldAlias . ' IS NOT NULL');
+                    $qb->andWhere($columnExpression . ' > :value');
+                    $qb->setParameter('value', $dateValue);
+                } else {
+                    $qb->andWhere($fieldAlias . ' > :value');
+                    $qb->setParameter('value', $value);
+                }
                 break;
             case 'gte':
-                $qb->andWhere($fieldAlias . ' >= :value');
-                $qb->setParameter('value', $value);
+                if ($isDateField && isset($columnExpression)) {
+                    $qb->andWhere($fieldAlias . ' IS NOT NULL');
+                    $qb->andWhere($columnExpression . ' >= :value');
+                    $qb->setParameter('value', $dateValue);
+                } else {
+                    $qb->andWhere($fieldAlias . ' >= :value');
+                    $qb->setParameter('value', $value);
+                }
                 break;
             case 'lt':
-                $qb->andWhere($fieldAlias . ' < :value');
-                $qb->setParameter('value', $value);
+                if ($isDateField && isset($columnExpression)) {
+                    $qb->andWhere($fieldAlias . ' IS NOT NULL');
+                    $qb->andWhere($columnExpression . ' < :value');
+                    $qb->setParameter('value', $dateValue);
+                } else {
+                    $qb->andWhere($fieldAlias . ' < :value');
+                    $qb->setParameter('value', $value);
+                }
                 break;
             case 'lte':
-                $qb->andWhere($fieldAlias . ' <= :value');
-                $qb->setParameter('value', $value);
+                if ($isDateField && isset($columnExpression)) {
+                    $qb->andWhere($fieldAlias . ' IS NOT NULL');
+                    $qb->andWhere($columnExpression . ' <= :value');
+                    $qb->setParameter('value', $dateValue);
+                } else {
+                    $qb->andWhere($fieldAlias . ' <= :value');
+                    $qb->setParameter('value', $value);
+                }
                 break;
             case 'empty':
                 $qb->andWhere('(' . $fieldAlias . ' IS NULL OR ' . $fieldAlias . ' = \'\')');
@@ -166,5 +223,57 @@ class OpportunityRepository extends CommonRepository
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult() > 0;
+    }
+
+    /**
+     * Check if a field is a date/datetime field
+     */
+    private function isDateField(string $field): bool
+    {
+        $dateFields = [
+            'dateEntered',
+            'dateModified',
+            'createdAt',
+            'updatedAt',
+            'dateClosed',
+            'abstractBookSendDateC',
+            'abstractResultSendDateC',
+            'abstractResultReadyDateC',
+        ];
+
+        return in_array($field, $dateFields);
+    }
+
+    /**
+     * Convert date parameters to date-only format (Y-m-d)
+     */
+    private function convertToDateOnly($value): string
+    {
+        // Handle DateTime objects
+        if ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        // Handle string datetime formats
+        if (is_string($value) && !empty($value)) {
+            // Extract date part from datetime strings
+            if (preg_match('/^(\d{4}-\d{2}-\d{2})[\sT]\d{2}:\d{2}/', $value, $matches)) {
+                return $matches[1];
+            }
+
+            // Already in date-only format
+            if (preg_match('/^(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                return $matches[1];
+            }
+
+            // Try to parse as date
+            $timestamp = strtotime($value);
+            if ($timestamp !== false) {
+                return date('Y-m-d', $timestamp);
+            }
+        }
+
+        // Return original value if we can't parse it
+        return $value;
     }
 }
