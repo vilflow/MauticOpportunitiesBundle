@@ -47,6 +47,9 @@ class AjaxController extends CoreAjaxController
         if (!empty($optionsMeta['options'])) {
             $data['options'] = $optionsMeta['options'];
             $data['optionsAttr'] = $optionsMeta['optionsAttr'] ?? [];
+
+            // Debug logging
+            error_log('AJAX Options for field ' . $alias . ': ' . json_encode($optionsMeta['options']));
         }
 
         // Also pass customChoiceValue if available (for date fields)

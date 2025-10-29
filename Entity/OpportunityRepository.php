@@ -66,10 +66,88 @@ class OpportunityRepository extends CommonRepository
             ->where('o.contact = :contactId')
             ->setParameter('contactId', $contactId);
 
+        // Debug logging
+        error_log(sprintf(
+            'CAMPAIGN DEBUG: field=%s, operator=%s, value=%s (type=%s)',
+            $field,
+            $operator,
+            is_array($value) ? json_encode($value) : (string)$value,
+            gettype($value)
+        ));
+
+        // Convert label to database key for select fields
+        $value = $this->convertLabelToKeyForSelectFields($field, $value);
+
+        error_log(sprintf('CAMPAIGN DEBUG: Converted value=%s', is_array($value) ? json_encode($value) : (string)$value));
+
+        // Use field name directly as entity property name (already in camelCase)
         $column = 'o.' . $field;
         $this->applyOperatorToQuery($qb, $column, $operator, $value);
 
-        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
+        // Log the generated SQL
+        $sql = $qb->getQuery()->getSQL();
+        $params = $qb->getParameters();
+        error_log(sprintf('CAMPAIGN DEBUG SQL: %s', $sql));
+        error_log(sprintf('CAMPAIGN DEBUG PARAMS: %s', json_encode($params->toArray())));
+
+        $result = (int) $qb->getQuery()->getSingleScalarResult() > 0;
+        error_log(sprintf('CAMPAIGN DEBUG RESULT: %s', $result ? 'true' : 'false'));
+
+        return $result;
+    }
+
+    /**
+     * Convert display label to database key for select fields
+     * The form submits labels (e.g., "Wire Transfer") but database stores keys (e.g., "Wire_Trasnfer")
+     */
+    private function convertLabelToKeyForSelectFields(string $field, $value)
+    {
+        $selectFields = [
+            'salesStage' => 'getStageChoices',
+            'opportunityType' => 'getOpportunityTypeChoices',
+            'leadSource' => 'getLeadSourceChoices',
+            'presentationTypeC' => 'getPresentationTypeChoices',
+            'registrationTypeC' => 'getRegistrationTypeChoices',
+            'paymentStatusC' => 'getPaymentStatusChoices',
+            'paymentChannelC' => 'getPaymentChannelChoices',
+            'reviewResultC' => 'getReviewResultChoices',
+            'formTypeC' => 'getFormTypeChoices',
+        ];
+
+        // If not a select field, return value as-is
+        if (!isset($selectFields[$field])) {
+            return $value;
+        }
+
+        $method = $selectFields[$field];
+        $choices = Opportunity::$method();
+
+        // Handle array values (for 'in' operator)
+        if (is_array($value)) {
+            $convertedValues = [];
+            foreach ($value as $v) {
+                $convertedValues[] = $this->findKeyByLabel($choices, $v);
+            }
+            return $convertedValues;
+        }
+
+        // Handle single value
+        return $this->findKeyByLabel($choices, $value);
+    }
+
+    /**
+     * Find the key for a given label in choices array
+     */
+    private function findKeyByLabel(array $choices, $label)
+    {
+        foreach ($choices as $key => $choiceLabel) {
+            if ($choiceLabel === $label) {
+                return $key;
+            }
+        }
+
+        // If no match found, return original value (might be a key already)
+        return $label;
     }
 
     private function applyOperatorToQuery(QueryBuilder $qb, string $column, string $operator, mixed $value): void
